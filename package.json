@@ -1,0 +1,86 @@
+{
+  "name": "BigInfo",
+  "author": "drod",
+  "version": "1.0",
+  "keywords": [
+    "weather",
+    "moon",
+    "moonphase",
+    "sun",
+    "sunrise",
+    "sunset",
+    "steps",
+    "big",
+    "bold",
+    "large",
+    "font"
+  ],
+  "dependencies": {
+    "@rebble/clay": "^1.0.8"
+  },
+  "pebble": {
+    "displayName": "BigInfo",
+    "uuid": "8d7cf8e1-27da-469b-bda9-d91c79d17a19",
+    "sdkVersion": "3",
+    "enableMultiJS": true,
+    "targetPlatforms": [
+      "aplite",
+      "basalt",
+      "diorite",
+      "emery",
+      "flint"
+    ],
+    "watchapp": {
+      "watchface": true
+    },
+    "capabilities": [
+      "location",
+      "configurable",
+      "health"
+    ],
+    "messageKeys": [
+      "NightTheme",
+      "BackgroundColorDay",
+      "TextColorDay",
+      "BackgroundColorNight",
+      "TextColorNight",
+      "ShowWeather",
+      "TemperatureUnit",
+      "WeatherInterval",
+      "TEMPERATURE",
+      "CONDITIONS",
+      "REQUEST_WEATHER",
+      "REQUEST_SUN",
+      "SUNRISE",
+      "SUNSET",
+      "MOONPHASE",
+      "ShowDate",
+      "ShowSteps",
+      "ShowSun",
+      "ShowMoon",
+      "PeriodicVibrate",
+      "BluetoothVibrate"
+    ],
+    "resources": {
+      "media": [
+        {
+          "type": "font",
+          "name": "FONT_TALLBOLD_49",
+          "file": "fonts/tallbolder.ttf",
+          "characterRegex": "[:0-9]"
+        },
+        {
+          "type": "font",
+          "name": "FONT_DRIPICONS_16",
+          "file": "fonts/dripicons-v2.ttf",
+          "characterRegex": "[z]"
+        },
+        {
+          "type": "font",
+          "name": "FONT_WEATHERICONS_18",
+          "file": "fonts/weathericons.ttf"
+        }
+      ]
+    }
+  }
+}
