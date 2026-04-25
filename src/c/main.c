@@ -513,7 +513,8 @@ static void prv_unobstructed_change(AnimationProgress progress, void *context) {
   GRect bounds = layer_get_unobstructed_bounds(s_window_layer);
 
   // Reposition layers to fit in the available space
-  int bar_y = bounds.size.h - (26 - (bounds.size.h / 12));
+  int bar_offset = (PBL_DISPLAY_HEIGHT / 6);
+  int bar_y = bounds.size.h - (bar_offset - (bounds.size.h / 12));
 
   GRect battery_frame = layer_get_frame(s_battery_layer);
   battery_frame.origin.y = bar_y;
@@ -646,10 +647,11 @@ static void main_window_load(Window *window) {
   text_layer_set_text(s_bt_icon_layer, "z");
 
   // Create battery meter Layer
-  int bar_height = 6;
-  int bar_width = bounds.size.w / 1.25;
+  int bar_offset = (PBL_DISPLAY_HEIGHT / 6);
+  int bar_height = 7;
+  int bar_width = bounds.size.w / 1.1;
   int bar_x = (bounds.size.w - bar_width) / 2;
-  int bar_y = bounds.size.h - (26 - (bounds.size.h / 12));
+  int bar_y = bounds.size.h - (bar_offset - (bounds.size.h / 12));
   s_battery_layer = layer_create(GRect(bar_x, bar_y, bar_width, bar_height));
   layer_set_update_proc(s_battery_layer, battery_update_proc);
 
