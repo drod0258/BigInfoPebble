@@ -668,7 +668,7 @@ static void main_window_load(Window *window) {
 
   // Create battery meter Layer
   int bar_offset = (PBL_DISPLAY_HEIGHT / 6);
-  int bar_height = 7;
+  int bar_height = (PBL_DISPLAY_HEIGHT / 24);
   int bar_width = bounds.size.w / 1.1;
   int bar_x = (bounds.size.w - bar_width) / 2;
   int bar_y = bounds.size.h - (bar_offset - (bounds.size.h / 12));
