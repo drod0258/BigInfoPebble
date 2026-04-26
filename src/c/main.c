@@ -558,30 +558,22 @@ static void main_window_load(Window *window) {
   int time_height;
   int date_padding;
   int date_height;
+  s_info_font = fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD);
+  info_padding = 10;
+  info_height = 28;
+  s_date_font = s_info_font;
+  date_padding = info_padding;
+  date_height = info_height;
+  s_bt_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_DRIPICONS_16));
+  s_weather_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_WEATHERICONS_18));
   #if defined(PBL_PLATFORM_EMERY)
-    s_info_font = fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD);
-    info_padding = 10;
-    info_height = 28;
     s_time_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_TALLBOLD_64));
     time_padding = 2;
     time_height = 64;
-    s_date_font = s_info_font;
-    date_padding = info_padding;
-    date_height = info_height;
-    s_bt_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_DRIPICONS_16));
-    s_weather_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_WEATHERICONS_18));
   #else
-    s_info_font = fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD);
-    info_padding = 10;
-    info_height = 28;
     s_time_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_TALLBOLD_49));
     time_padding = 2;
     time_height = 49;
-    s_date_font = s_info_font;
-    date_padding = info_padding;
-    date_height = info_height;
-    s_bt_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_DRIPICONS_16));
-    s_weather_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_WEATHERICONS_18));
   #endif
 
   // Position the time + date block
