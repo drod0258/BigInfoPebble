@@ -604,8 +604,17 @@ static void main_window_load(Window *window) {
   text_layer_set_font(s_date_layer, s_info_font);
   text_layer_set_text_alignment(s_date_layer, GTextAlignmentCenter);
 
+  // Create battery meter Layer
+  int bar_offset = (PBL_DISPLAY_HEIGHT / 6);
+  int bar_height = (PBL_DISPLAY_HEIGHT / 24);
+  int bar_width = bounds.size.w / 1.1;
+  int bar_x = (bounds.size.w - bar_width) / 2;
+  int bar_y = bounds.size.h - (bar_offset - (bounds.size.h / 12));
+  s_battery_layer = layer_create(GRect(bar_x, bar_y, bar_width, bar_height));
+  layer_set_update_proc(s_battery_layer, battery_update_proc);
+
   // Create weather TextLayer
-  int weather_y = time_y + time_height + time_padding;
+  int weather_y = bar_y - info_height - (bounds.size.h / 4.3);
   s_weather_layer = text_layer_create(
       GRect(0, weather_y, ((bounds.size.w / 10) * 4), (info_height + 4)));
   text_layer_set_background_color(s_weather_layer, GColorClear);
@@ -665,15 +674,6 @@ static void main_window_load(Window *window) {
   text_layer_set_font(s_bt_icon_layer, s_bt_font);
   text_layer_set_text_alignment(s_bt_icon_layer, GTextAlignmentCenter);
   text_layer_set_text(s_bt_icon_layer, "z");
-
-  // Create battery meter Layer
-  int bar_offset = (PBL_DISPLAY_HEIGHT / 6);
-  int bar_height = (PBL_DISPLAY_HEIGHT / 24);
-  int bar_width = bounds.size.w / 1.1;
-  int bar_x = (bounds.size.w - bar_width) / 2;
-  int bar_y = bounds.size.h - (bar_offset - (bounds.size.h / 12));
-  s_battery_layer = layer_create(GRect(bar_x, bar_y, bar_width, bar_height));
-  layer_set_update_proc(s_battery_layer, battery_update_proc);
 
   // Add layers to the Window
   layer_add_child(s_window_layer, text_layer_get_layer(s_time_layer));
