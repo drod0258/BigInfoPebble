@@ -1,7 +1,7 @@
 {
   "name": "BigInfo",
   "author": "drod",
-  "version": "1.0",
+  "version": "1.1",
   "keywords": [
     "weather",
     "moon",
@@ -68,6 +68,15 @@
           "name": "FONT_TALLBOLD_49",
           "file": "fonts/tallbolder.ttf",
           "characterRegex": "[:0-9]"
+        },
+        {
+          "type": "font",
+          "name": "FONT_TALLBOLD_64",
+          "file": "fonts/tallbolder.ttf",
+          "characterRegex": "[:0-9]",
+          "targetPlatforms": [
+            "emery"
+          ]
         },
         {
           "type": "font",
