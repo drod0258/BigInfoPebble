@@ -104,6 +104,12 @@ module.exports = [
       },
       {
         "type": "toggle",
+        "messageKey": "ShowPhoneBattery",
+        "label": "Show Phone Battery",
+        "defaultValue": false
+      },
+      {
+        "type": "toggle",
         "messageKey": "PeriodicVibrate",
         "label": "Vibrate Hourly",
         "defaultValue": false

@@ -1,7 +1,7 @@
 {
   "name": "BigInfo",
   "author": "drod",
-  "version": "1.1",
+  "version": "1.2",
   "keywords": [
     "weather",
     "moon",
@@ -59,7 +59,11 @@
       "ShowSun",
       "ShowMoon",
       "PeriodicVibrate",
-      "BluetoothVibrate"
+      "BluetoothVibrate",
+      "ShowPhoneBattery",
+      "REQUEST_BATTERY",
+      "REQUEST_BATTERY_UNSUBSCRIBE",
+      "BATTERY"
     ],
     "resources": {
       "media": [
