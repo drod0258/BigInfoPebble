@@ -11,7 +11,8 @@ A simple, clean Pebble watchface with a large, easy-to-read font. Displays the e
 - **Weather** -- current temperature and conditions via [Open-Meteo](https://open-meteo.com/) (no API key required), with configurable temperature unit and update interval
 - **Sunrise & sunset times** -- sun times from your location. Uses times from [Open-Meteo](https://open-meteo.com/) if weather is enabled, otherwise calculated on device
 - **Moon phase** -- 29-phase moon icon and weather conditions use the [weather-icons](https://github.com/erikflowers/weather-icons) font
-- **Battery meter** -- color-coded bar (green/yellow/red) with fallback to black and white
+- **Watch battery meter** -- color-coded bar (green/yellow/red) with fallback to black and white
+- **Phone battery meter** -- reports the connected phone's battery life from supported  devices
 - **Bluetooth indicator** -- icon and optional vibration alert on disconnect
 - **Hourly vibration** -- optional periodic pulse
 
