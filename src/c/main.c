@@ -35,7 +35,6 @@ typedef struct ClaySettings {
 
 // An instance of the struct
 static ClaySettings settings;
-static bool s_js_ready;
 
 static Window *s_main_window;
 static TextLayer *s_time_layer;
@@ -383,12 +382,6 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   bool prev_ShowWeather = settings.ShowWeather;
   bool prev_TemperatureUnit = settings.TemperatureUnit;
   bool prev_ShowPhoneBattery = settings.ShowPhoneBattery;
-
-  // chekc if PebbleKit JS is ready
-  Tuple *ready_tuple = dict_find(iterator, MESSAGE_KEY_JSReady);
-  if (ready_tuple) {
-    s_js_ready = true;
-  }
 
   // Check for Clay settings data
   Tuple *bg_color_day_t = dict_find(iterator, MESSAGE_KEY_BackgroundColorDay);
