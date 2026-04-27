@@ -59,7 +59,12 @@
       "ShowSun",
       "ShowMoon",
       "PeriodicVibrate",
-      "BluetoothVibrate"
+      "BluetoothVibrate",
+      "ShowPhoneBattery",
+      "REQUEST_BATTERY",
+      "REQUEST_BATTERY_UNSUBSCRIBE",
+      "BATTERY",
+      "JSReady"
     ],
     "resources": {
       "media": [

@@ -208,6 +208,70 @@ function sunCalcInfo (pos){
 }
 // End Sun & Moon functions
 
+// battery functions
+function sendBatteryLevel(battery, reportInterval) {
+  var batteryLevel = Math.floor(battery.level * 100);
+  var dictionary = {
+    "BATTERY": batteryLevel
+  };
+  if (batteryLevel % reportInterval == 0) {
+    Pebble.sendAppMessage(dictionary,
+      function(e) {
+        console.log('Battery sent to Pebble successfully!');
+      },
+      function(e) {
+        console.log('Error sending battery to Pebble!');
+      }
+    );
+  }
+}
+function batteryLevelSubscribe(battery) {
+  // Listen for changes in battery level
+  battery.addEventListener('levelchange', function() {
+    sendBatteryLevel(battery, 5);
+  }, false);
+  // also send battery level immediately
+  sendBatteryLevel(battery, 1);
+}
+function batteryLevelUnsubscribe(battery) {
+  // Stop listening for changes in battery level
+  battery.removeEventListener('levelchange', function() {
+    sendBatteryLevel(battery, 5);
+  }, false);
+}
+function batteryStatusFailure() {
+  console.log("Error: Phone Battery function failed to resolve the BatteryManager object.");
+}
+function getBattery() {
+  // Test for old or new battery API
+  if (navigator.battery) {
+    console.log('Success: found navigator.battery API');
+    batteryLevelSubscribe(navigator.battery);
+  } else if (navigator.getBattery) {
+    console.log('Success: found navigator.getBattery API');
+    navigator.getBattery().then(function(newBattery) {
+      batteryLevelSubscribe(newBattery);
+    }, batteryStatusFailure);
+  } else {
+    console.log('Error: no phone battery API found');
+  }
+}
+function stopBattery() {
+  // Test for old or new battery API
+  if (navigator.battery) {
+    console.log('Success: found navigator.battery API');
+    batteryLevelUnsubscribe(navigator.battery);
+  } else if (navigator.getBattery) {
+    console.log('Success: found navigator.getBattery API');
+    navigator.getBattery().then(function(newBattery) {
+      batteryLevelUnsubscribe(newBattery);
+    }, batteryStatusFailure);
+  } else {
+    console.log('Error: no phone battery API found');
+  }
+}
+// end battery functions
+
 // Convert Open-Meteo weather code to human-readable condition
 function weatherCodeToCondition(code) {
   if (code === 0) return 0; //'Clear';
@@ -305,9 +369,12 @@ function getSunInfo() {
 Pebble.addEventListener('ready',
   function(e) {
     console.log('PebbleKit JS ready!');
-    // Get the initial weather
+    // Update s_js_ready on watch
+    Pebble.sendAppMessage({'JSReady': 1});
+    // Get the initial data
     //getSunInfo();
     //getWeather();
+    //getBattery();
   }
 );
 
@@ -322,6 +389,14 @@ Pebble.addEventListener('appmessage',
     // Check if this is a weather refresh request
     if (e.payload['REQUEST_WEATHER']) {
       getWeather();
+    }
+    // Check if this is a battery refresh request
+    if (e.payload['REQUEST_BATTERY']) {
+      getBattery();
+    }
+    // Check if this is a battery unsubscribe request
+    if (e.payload['REQUEST_BATTERY_UNSUBSCRIBE']) {
+      stopBattery();
     }
   }
 );

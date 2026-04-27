@@ -20,6 +20,7 @@ typedef struct ClaySettings {
   bool ShowSteps;
   bool ShowSun;
   bool ShowMoon;
+  bool ShowPhoneBattery;
   bool PeriodicVibrate;
   bool BluetoothVibrate;
   // storage
@@ -29,10 +30,12 @@ typedef struct ClaySettings {
   int MoonPhase;
   int WeatherTemp;
   int WeatherIcon;
+  int PhoneBattery;
 } ClaySettings;
 
 // An instance of the struct
 static ClaySettings settings;
+static bool s_js_ready;
 
 static Window *s_main_window;
 static TextLayer *s_time_layer;
@@ -55,6 +58,7 @@ static GFont s_weather_font;
 // Battery
 static Layer *s_battery_layer;
 static int s_battery_level;
+static Layer *s_phone_battery_layer;
 
 // Unobstructed area
 static Layer *s_window_layer;
@@ -76,6 +80,7 @@ static void prv_default_settings() {
   settings.ShowSteps = false;
   settings.ShowSun = false;
   settings.ShowMoon = false;
+  settings.ShowPhoneBattery = false;
   settings.PeriodicVibrate = false;
   settings.BluetoothVibrate = false;
   // storage
@@ -85,6 +90,7 @@ static void prv_default_settings() {
   settings.MoonPhase=29;
   settings.WeatherTemp=-99;
   settings.WeatherIcon=15;
+  settings.PhoneBattery=0;
 }
 
 static char* weather_conditions[] = {
@@ -205,9 +211,11 @@ static void prv_update_display() {
   layer_set_hidden(text_layer_get_layer(s_sunrise_layer), !settings.ShowSun);
   layer_set_hidden(text_layer_get_layer(s_sunset_layer), !settings.ShowSun);
   layer_set_hidden(text_layer_get_layer(s_moon_layer), !settings.ShowMoon);
+  layer_set_hidden(s_phone_battery_layer, !settings.ShowPhoneBattery);
 
   // Mark battery layer for redraw (color may have changed)
   layer_mark_dirty(s_battery_layer);
+  layer_mark_dirty(s_phone_battery_layer);
 }
 
 static void update_time() {
@@ -322,11 +330,11 @@ static void battery_callback(BatteryChargeState state) {
   layer_mark_dirty(s_battery_layer);
 }
 
-static void battery_update_proc(Layer *layer, GContext *ctx) {
+static void battery_update_proc(Layer *layer, GContext *ctx, int battery_level) {
   GRect bounds = layer_get_bounds(layer);
 
   // Find the width of the bar (inside the border)
-  int bar_width = ((s_battery_level * (bounds.size.w - 4)) / 100);
+  int bar_width = ((battery_level * (bounds.size.w - 4)) / 100);
 
   // Draw the border using the text color
   graphics_context_set_stroke_color(ctx, settings.TextColor);
@@ -334,9 +342,9 @@ static void battery_update_proc(Layer *layer, GContext *ctx) {
 
   // Choose color based on battery level
   GColor bar_color;
-  if (s_battery_level <= 20) {
+  if (battery_level <= 20) {
     bar_color = PBL_IF_COLOR_ELSE(GColorRed, settings.TextColor);
-  } else if (s_battery_level <= 40) {
+  } else if (battery_level <= 40) {
     bar_color = PBL_IF_COLOR_ELSE(GColorChromeYellow, settings.TextColor);
   } else {
     bar_color = PBL_IF_COLOR_ELSE(GColorGreen, settings.TextColor);
@@ -345,6 +353,14 @@ static void battery_update_proc(Layer *layer, GContext *ctx) {
   // Draw the filled bar inside the border
   graphics_context_set_fill_color(ctx, bar_color);
   graphics_fill_rect(ctx, GRect(2, 2, bar_width, bounds.size.h - 4), 1, GCornerNone);
+}
+
+static void watch_battery_update_proc(Layer *layer, GContext *ctx) {
+  battery_update_proc(layer, ctx, s_battery_level);
+}
+
+static void phone_battery_update_proc(Layer *layer, GContext *ctx) {
+  battery_update_proc(layer, ctx, settings.PhoneBattery);
 }
 
 static void bluetooth_callback(bool connected) {
@@ -366,6 +382,13 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   bool prev_NightTheme = settings.NightTheme;
   bool prev_ShowWeather = settings.ShowWeather;
   bool prev_TemperatureUnit = settings.TemperatureUnit;
+  bool prev_ShowPhoneBattery = settings.ShowPhoneBattery;
+
+  // chekc if PebbleKit JS is ready
+  Tuple *ready_tuple = dict_find(iterator, MESSAGE_KEY_JSReady);
+  if (ready_tuple) {
+    s_js_ready = true;
+  }
 
   // Check for Clay settings data
   Tuple *bg_color_day_t = dict_find(iterator, MESSAGE_KEY_BackgroundColorDay);
@@ -417,6 +440,10 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   if (show_moon_t) {
     settings.ShowMoon = show_moon_t->value->int32 == 1;
   }
+  Tuple *show_phone_battery_t = dict_find(iterator, MESSAGE_KEY_ShowPhoneBattery);
+  if (show_phone_battery_t) {
+    settings.ShowPhoneBattery = show_phone_battery_t->value->int32 == 1;
+  }
   Tuple *periodic_vibrate_t = dict_find(iterator, MESSAGE_KEY_PeriodicVibrate);
   if (periodic_vibrate_t) {
     settings.PeriodicVibrate = periodic_vibrate_t->value->int32 == 1;
@@ -460,8 +487,30 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     update_moon();
   }
 
+  // check for battery data
+  Tuple *battery_tuple = dict_find(iterator, MESSAGE_KEY_BATTERY);
+  if (battery_tuple) {
+    settings.PhoneBattery = (int)battery_tuple->value->int32;
+    layer_mark_dirty(s_phone_battery_layer);
+  }
+
   // Save and apply if any settings were changed
-  if (bg_color_day_t || text_color_day_t || bg_color_night_t || text_color_night_t || night_theme_t || temp_unit_t || show_weather_t || show_date_t || show_steps_t || show_sun_t || show_moon_t) {
+  if (bg_color_day_t || text_color_day_t || bg_color_night_t || text_color_night_t || night_theme_t || temp_unit_t || show_weather_t || show_date_t || show_steps_t || show_sun_t || show_moon_t || show_phone_battery_t) {
+    
+    // if show battery was toggled
+    if (prev_ShowPhoneBattery != settings.ShowPhoneBattery) {
+      int bar_offset = (PBL_DISPLAY_HEIGHT / 6);
+      int bar_height = (PBL_DISPLAY_HEIGHT / 24);
+      int bar_width = PBL_DISPLAY_WIDTH / 1.1;
+      int bar_x = (PBL_DISPLAY_WIDTH - bar_width) / 2;
+      int bar_y = PBL_DISPLAY_HEIGHT - (bar_offset - (PBL_DISPLAY_HEIGHT / 12));
+      if (settings.ShowPhoneBattery) {
+        bar_width = (bar_width / 2) - (bar_x / 2);
+      }
+      layer_set_frame(s_battery_layer, GRect(bar_x, bar_y, bar_width, bar_height));
+      layer_mark_dirty(s_battery_layer);
+    }
+    
     prv_save_settings();
     prv_update_display();
     // Only request data when a setting was actually changed
@@ -469,7 +518,9 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
                    (!prev_ShowMoon && settings.ShowMoon) ||
                    (!prev_NightTheme && settings.NightTheme);
     bool requestWeather = ((prev_TemperatureUnit != settings.TemperatureUnit) || !prev_ShowWeather) && settings.ShowWeather;
-    if (requestSun || requestWeather) {
+    bool requestBattery = (!prev_ShowPhoneBattery && settings.ShowPhoneBattery);
+    bool unsibscribeBattery = (prev_ShowPhoneBattery && !settings.ShowPhoneBattery);
+    if (requestSun || requestWeather || requestBattery || unsibscribeBattery) {
       DictionaryIterator *iter;
       app_message_outbox_begin(&iter);
       if (requestSun) {
@@ -478,9 +529,15 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
       if (requestWeather) {
         dict_write_uint8(iter, MESSAGE_KEY_REQUEST_WEATHER, 1);
       }
+      if (requestBattery) {
+        dict_write_uint8(iter, MESSAGE_KEY_REQUEST_BATTERY, 1);
+      }
+      if (unsibscribeBattery) {
+        dict_write_uint8(iter, MESSAGE_KEY_REQUEST_BATTERY_UNSUBSCRIBE, 1);
+      }
       app_message_outbox_send();
     }
-  } else if (temp_tuple || conditions_tuple || sunrise_tuple || sunset_tuple || moon_tuple) {
+  } else if (temp_tuple || conditions_tuple || sunrise_tuple || sunset_tuple || moon_tuple || battery_tuple) {
     prv_save_settings();
   }
 }
@@ -516,9 +573,13 @@ static void prv_unobstructed_change(AnimationProgress progress, void *context) {
   int bar_offset = (PBL_DISPLAY_HEIGHT / 6);
   int bar_y = bounds.size.h - (bar_offset - (bounds.size.h / 12));
 
-  GRect battery_frame = layer_get_frame(s_battery_layer);
-  battery_frame.origin.y = bar_y;
-  layer_set_frame(s_battery_layer, battery_frame);
+  GRect watch_battery_frame = layer_get_frame(s_battery_layer);
+  watch_battery_frame.origin.y = bar_y;
+  layer_set_frame(s_battery_layer, watch_battery_frame);
+
+  GRect phone_battery_frame = layer_get_frame(s_phone_battery_layer);
+  phone_battery_frame.origin.y = bar_y;
+  layer_set_frame(s_phone_battery_layer, phone_battery_frame);
 }
 
 static void prv_unobstructed_did_change(void *context) {
@@ -602,8 +663,18 @@ static void main_window_load(Window *window) {
   int bar_width = bounds.size.w / 1.1;
   int bar_x = (bounds.size.w - bar_width) / 2;
   int bar_y = bounds.size.h - (bar_offset - (bounds.size.h / 12));
+  int phone_bar_width = (bar_width / 2) - (bar_x / 2);
+  if (settings.ShowPhoneBattery) {
+    bar_width = phone_bar_width;
+  }
   s_battery_layer = layer_create(GRect(bar_x, bar_y, bar_width, bar_height));
-  layer_set_update_proc(s_battery_layer, battery_update_proc);
+  layer_set_update_proc(s_battery_layer, watch_battery_update_proc);
+
+  // Create phone battery meter Layer
+  int phone_bar_y = bar_y;
+  int phone_bar_x = (bar_x * 2) + phone_bar_width;
+  s_phone_battery_layer = layer_create(GRect(phone_bar_x, phone_bar_y, phone_bar_width, bar_height));
+  layer_set_update_proc(s_phone_battery_layer, phone_battery_update_proc);
 
   // Create weather TextLayer
   int weather_y = bar_y - info_height - (bounds.size.h / 4.3);
@@ -678,6 +749,7 @@ static void main_window_load(Window *window) {
   layer_add_child(s_window_layer, text_layer_get_layer(s_moon_layer));
   layer_add_child(s_window_layer, text_layer_get_layer(s_bt_icon_layer));
   layer_add_child(s_window_layer, s_battery_layer);
+  layer_add_child(s_window_layer, s_phone_battery_layer);
 
   // Apply saved settings
   prv_update_display();
@@ -709,6 +781,7 @@ static void main_window_unload(Window *window) {
   fonts_unload_custom_font(s_bt_font);
   fonts_unload_custom_font(s_weather_font);
   layer_destroy(s_battery_layer);
+  layer_destroy(s_phone_battery_layer);
 }
 
 static void init() {
@@ -756,6 +829,14 @@ static void init() {
   const int inbox_size = 256;
   const int outbox_size = 256;
   app_message_open(inbox_size, outbox_size);
+
+  // set initial values
+  if (settings.ShowPhoneBattery) {
+    DictionaryIterator *iter;
+    app_message_outbox_begin(&iter);
+    dict_write_uint8(iter, MESSAGE_KEY_REQUEST_BATTERY, 1);
+    app_message_outbox_send();
+  }
 }
 
 static void deinit() {
