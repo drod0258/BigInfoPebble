@@ -17,6 +17,7 @@ typedef struct ClaySettings {
   bool TemperatureUnit;
   int WeatherInterval;
   bool ShowDate;
+  bool ShowDate2;
   bool AltDate;
   bool ShowSteps;
   bool ShowSun;
@@ -40,6 +41,7 @@ static ClaySettings settings;
 static Window *s_main_window;
 static TextLayer *s_time_layer;
 static TextLayer *s_date_layer;
+static TextLayer *s_date2_layer;
 static TextLayer *s_steps_layer;
 static TextLayer *s_weather_layer;
 static TextLayer *s_weather_icon_layer;
@@ -74,6 +76,7 @@ static void prv_default_settings() {
   settings.TextColor = settings.TextColorDay;
   settings.NightTheme = false;
   settings.ShowDate = false;
+  settings.ShowDate2 = false;
   settings.AltDate = false;
   settings.ShowWeather = false;
   settings.TemperatureUnit = false;
@@ -197,6 +200,7 @@ static void prv_update_display() {
   // Set text colors
   text_layer_set_text_color(s_time_layer, settings.TextColor);
   text_layer_set_text_color(s_date_layer, settings.TextColor);
+  text_layer_set_text_color(s_date2_layer, settings.TextColor);
   text_layer_set_text_color(s_steps_layer, settings.TextColor);
   text_layer_set_text_color(s_weather_layer, settings.TextColor);
   text_layer_set_text_color(s_weather_icon_layer, settings.TextColor);
@@ -206,6 +210,7 @@ static void prv_update_display() {
 
   // Show/hide based on setting
   layer_set_hidden(text_layer_get_layer(s_date_layer), !settings.ShowDate);
+  layer_set_hidden(text_layer_get_layer(s_date2_layer), (!settings.ShowDate2 || !(PBL_DISPLAY_HEIGHT >= 228)));
   layer_set_hidden(text_layer_get_layer(s_steps_layer), !settings.ShowSteps);
   layer_set_hidden(text_layer_get_layer(s_weather_layer), !settings.ShowWeather);
   layer_set_hidden(text_layer_get_layer(s_weather_icon_layer), !settings.ShowWeather);
@@ -249,12 +254,16 @@ static void update_date() {
   struct tm *tick_time = localtime(&now);
 
   static char s_date_buffer[16];
+  static char s_date2_buffer[16];
   if (settings.AltDate) {
     strftime(s_date_buffer, sizeof(s_date_buffer), "%Y-%m-%d", tick_time);
+    strftime(s_date2_buffer, sizeof(s_date2_buffer), "%A", tick_time);
   } else {
     strftime(s_date_buffer, sizeof(s_date_buffer), "%a %b %d", tick_time);
+    strftime(s_date2_buffer, sizeof(s_date2_buffer), "%Y", tick_time);
   }
   text_layer_set_text(s_date_layer, s_date_buffer);
+  text_layer_set_text(s_date2_layer, s_date2_buffer);
 }
 
 static void update_weather() {
@@ -421,6 +430,10 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   if (show_date_t) {
     settings.ShowDate = show_date_t->value->int32 == 1;
   }
+  Tuple *show_date2_t = dict_find(iterator, MESSAGE_KEY_ShowDate2);
+  if (show_date2_t) {
+    settings.ShowDate2 = show_date2_t->value->int32 == 1;
+  }
   Tuple *alt_date_t = dict_find(iterator, MESSAGE_KEY_AltDate);
   if (alt_date_t) {
     settings.AltDate = alt_date_t->value->int32 == 1;
@@ -505,7 +518,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   }
 
   // Save and apply if any settings were changed
-  if (bg_color_day_t || text_color_day_t || bg_color_night_t || text_color_night_t || night_theme_t || temp_unit_t || show_weather_t || show_date_t || alt_date_t || show_steps_t || show_sun_t || show_moon_t || show_phone_battery_t) {
+  if (bg_color_day_t || text_color_day_t || bg_color_night_t || text_color_night_t || night_theme_t || temp_unit_t || show_weather_t || show_date_t || show_date2_t || alt_date_t || show_steps_t || show_sun_t || show_moon_t || show_phone_battery_t) {
     
     // if show battery was toggled
     if (prev_ShowPhoneBattery != settings.ShowPhoneBattery) {
@@ -654,7 +667,11 @@ static void main_window_load(Window *window) {
   #endif
 
   // Position the time + date block
-  int date_y = (bounds.size.h / 16) - date_padding;
+  int date2_y = (bounds.size.h / 16) - date_padding;
+  int date_y = date2_y;
+  if (PBL_DISPLAY_HEIGHT >= 228) {
+    date_y = date_y + date_height;
+  }
   int time_y = date_y + date_height + date_padding - time_padding;
 
   // Create the time TextLayer
@@ -672,6 +689,13 @@ static void main_window_load(Window *window) {
   text_layer_set_text_color(s_date_layer, settings.TextColor);
   text_layer_set_font(s_date_layer, s_info_font);
   text_layer_set_text_alignment(s_date_layer, GTextAlignmentCenter);
+
+  s_date2_layer = text_layer_create(
+      GRect(0, date2_y, bounds.size.w, (info_height + 4)));
+  text_layer_set_background_color(s_date2_layer, GColorClear);
+  text_layer_set_text_color(s_date2_layer, settings.TextColor);
+  text_layer_set_font(s_date2_layer, s_info_font);
+  text_layer_set_text_alignment(s_date2_layer, GTextAlignmentCenter);
 
   // Create battery meter Layer
   int bar_offset = (PBL_DISPLAY_HEIGHT / 6);
@@ -693,7 +717,7 @@ static void main_window_load(Window *window) {
   layer_set_update_proc(s_phone_battery_layer, phone_battery_update_proc);
 
   // Create weather TextLayer
-  int weather_y = bar_y - info_height - (bounds.size.h / 4.3);
+  int weather_y = bar_y - (info_height * 2) - (bounds.size.h / 15);
   s_weather_layer = text_layer_create(
       GRect(0, weather_y, ((bounds.size.w / 10) * 4), (info_height + 4)));
   text_layer_set_background_color(s_weather_layer, GColorClear);
@@ -757,6 +781,7 @@ static void main_window_load(Window *window) {
   // Add layers to the Window
   layer_add_child(s_window_layer, text_layer_get_layer(s_time_layer));
   layer_add_child(s_window_layer, text_layer_get_layer(s_date_layer));
+  layer_add_child(s_window_layer, text_layer_get_layer(s_date2_layer));
   layer_add_child(s_window_layer, text_layer_get_layer(s_weather_layer));
   layer_add_child(s_window_layer, text_layer_get_layer(s_weather_icon_layer));
   layer_add_child(s_window_layer, text_layer_get_layer(s_steps_layer));
@@ -786,6 +811,7 @@ static void main_window_load(Window *window) {
 static void main_window_unload(Window *window) {
   text_layer_destroy(s_time_layer);
   text_layer_destroy(s_date_layer);
+  text_layer_destroy(s_date2_layer);
   text_layer_destroy(s_weather_layer);
   text_layer_destroy(s_weather_icon_layer);
   text_layer_destroy(s_steps_layer);

@@ -65,6 +65,13 @@ module.exports = [
       },
       {
         "type": "toggle",
+        "messageKey": "ShowDate2",
+        "label": "Show additional Day/Year",
+        "description": "Only for larger screens e.g. emery",
+        "defaultValue": false
+      },
+      {
+        "type": "toggle",
         "messageKey": "AltDate",
         "label": "Alternate Date Format",
         "description": "Toggle between `Day Mon DD` and `YYYY-MM-DD`",
