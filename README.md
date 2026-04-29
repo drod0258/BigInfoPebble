@@ -6,7 +6,7 @@ A simple, clean Pebble watchface with a large, easy-to-read font. Displays the e
 
 - **Large time display** -- tall bold font, 12 or 24-hour format
 - **Custom color options** -- configurable background and text colors. Optionally switches colors based on sunrise/sunset
-- **Date** -- day, month, and date
+- **Date** -- year, day, month, date, and ISO 8601 date
 - **Step counter** -- today's steps via Pebble Health
 - **Weather** -- current temperature and conditions via [Open-Meteo](https://open-meteo.com/) (no API key required), with configurable temperature unit and update interval
 - **Sunrise & sunset times** -- sun times from your location. Uses times from [Open-Meteo](https://open-meteo.com/) if weather is enabled, otherwise calculated on device
@@ -15,6 +15,9 @@ A simple, clean Pebble watchface with a large, easy-to-read font. Displays the e
 - **Phone battery meter** -- reports the connected phone's battery life from supported  devices
 - **Bluetooth indicator** -- icon and optional vibration alert on disconnect
 - **Hourly vibration** -- optional periodic pulse
+
+## Want to try it?
+Download on the Pebble store: https://apps.repebble.com/5eda31d774a34edeb1c87a39
 
 ## Supported Platforms
 
