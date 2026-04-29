@@ -62,7 +62,7 @@
       "BluetoothVibrate",
       "ShowPhoneBattery",
       "REQUEST_BATTERY",
-      "REQUEST_BATTERY_UNSUBSCRIBE",
+      "UNSUBSCRIBE_BATTERY",
       "BATTERY"
     ],
     "resources": {
