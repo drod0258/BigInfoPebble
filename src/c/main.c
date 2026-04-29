@@ -732,7 +732,7 @@ static void main_window_load(Window *window) {
   text_layer_set_background_color(s_weather_icon_layer, GColorClear);
   text_layer_set_text_color(s_weather_icon_layer, settings.TextColor);
   text_layer_set_font(s_weather_icon_layer, s_weather_font);
-  text_layer_set_text_alignment(s_weather_icon_layer, GTextAlignmentRight);
+  text_layer_set_text_alignment(s_weather_icon_layer, GTextAlignmentCenter);
 
   // Create steps TextLayer
   int steps_y = weather_y;
