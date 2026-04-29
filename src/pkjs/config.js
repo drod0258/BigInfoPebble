@@ -106,6 +106,12 @@ module.exports = [
       },
       {
         "type": "toggle",
+        "messageKey": "ShowHR",
+        "label": "Show Heartrate",
+        "defaultValue": false
+      },
+      {
+        "type": "toggle",
         "messageKey": "ShowSun",
         "label": "Show Sunrise/Sunset",
         "defaultValue": false

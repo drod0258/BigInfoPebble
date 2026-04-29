@@ -20,6 +20,7 @@ typedef struct ClaySettings {
   bool ShowDate2;
   bool AltDate;
   bool ShowSteps;
+  bool ShowHR;
   bool ShowSun;
   bool ShowMoon;
   bool ShowPhoneBattery;
@@ -43,6 +44,7 @@ static TextLayer *s_time_layer;
 static TextLayer *s_date_layer;
 static TextLayer *s_date2_layer;
 static TextLayer *s_steps_layer;
+static TextLayer *s_hr_layer;
 static TextLayer *s_weather_layer;
 static TextLayer *s_weather_icon_layer;
 static TextLayer *s_sunrise_layer;
@@ -82,6 +84,7 @@ static void prv_default_settings() {
   settings.TemperatureUnit = false;
   settings.WeatherInterval = 3;
   settings.ShowSteps = false;
+  settings.ShowHR = false;
   settings.ShowSun = false;
   settings.ShowMoon = false;
   settings.ShowPhoneBattery = false;
@@ -202,6 +205,7 @@ static void prv_update_display() {
   text_layer_set_text_color(s_date_layer, settings.TextColor);
   text_layer_set_text_color(s_date2_layer, settings.TextColor);
   text_layer_set_text_color(s_steps_layer, settings.TextColor);
+  text_layer_set_text_color(s_hr_layer, settings.TextColor);
   text_layer_set_text_color(s_weather_layer, settings.TextColor);
   text_layer_set_text_color(s_weather_icon_layer, settings.TextColor);
   text_layer_set_text_color(s_sunrise_layer, settings.TextColor);
@@ -212,6 +216,7 @@ static void prv_update_display() {
   layer_set_hidden(text_layer_get_layer(s_date_layer), !settings.ShowDate);
   layer_set_hidden(text_layer_get_layer(s_date2_layer), (!settings.ShowDate2 || !(PBL_DISPLAY_HEIGHT >= 228)));
   layer_set_hidden(text_layer_get_layer(s_steps_layer), !settings.ShowSteps);
+  layer_set_hidden(text_layer_get_layer(s_hr_layer), (!settings.ShowSteps || !(PBL_DISPLAY_HEIGHT >= 228)));
   layer_set_hidden(text_layer_get_layer(s_weather_layer), !settings.ShowWeather);
   layer_set_hidden(text_layer_get_layer(s_weather_icon_layer), !settings.ShowWeather);
   layer_set_hidden(text_layer_get_layer(s_sunrise_layer), !settings.ShowSun);
@@ -292,6 +297,13 @@ static void update_steps() {
   text_layer_set_text(s_steps_layer, s_steps_buffer);
 }
 
+static void update_hr() {
+  static char s_hr_buffer[8];
+  int hr = (int)health_service_peek_current_value(HealthMetricHeartRateBPM);
+  snprintf(s_hr_buffer, sizeof(s_hr_buffer), "%d", hr);
+  text_layer_set_text(s_hr_layer, s_hr_buffer);
+}
+
 static void update_sun() {
   static char sunrise_buffer[6];
   static char sunset_buffer[6];
@@ -310,6 +322,9 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   update_time();
   if (settings.ShowSteps){
     update_steps();
+  }
+  if (settings.ShowHR){
+    update_hr();
   }
 
   // run every hour
@@ -455,6 +470,11 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     settings.ShowSteps = show_steps_t->value->int32 == 1;
     update_steps();
   }
+  Tuple *show_hr_t = dict_find(iterator, MESSAGE_KEY_ShowHR);
+  if (show_hr_t) {
+    settings.ShowHR = show_hr_t->value->int32 == 1;
+    update_hr();
+  }
   Tuple *show_sun_t = dict_find(iterator, MESSAGE_KEY_ShowSun);
   if (show_sun_t) {
     settings.ShowSun = show_sun_t->value->int32 == 1;
@@ -518,7 +538,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   }
 
   // Save and apply if any settings were changed
-  if (bg_color_day_t || text_color_day_t || bg_color_night_t || text_color_night_t || night_theme_t || temp_unit_t || show_weather_t || show_date_t || show_date2_t || alt_date_t || show_steps_t || show_sun_t || show_moon_t || show_phone_battery_t) {
+  if (bg_color_day_t || text_color_day_t || bg_color_night_t || text_color_night_t || night_theme_t || temp_unit_t || show_weather_t || show_date_t || show_date2_t || alt_date_t || show_steps_t || show_hr_t || show_sun_t || show_moon_t || show_phone_battery_t) {
     
     // if show battery was toggled
     if (prev_ShowPhoneBattery != settings.ShowPhoneBattery) {
@@ -588,6 +608,7 @@ static void prv_unobstructed_will_change(GRect final_unobstructed_screen_area, v
   // Hide layers during the transition to reduce clutter
   layer_set_hidden(text_layer_get_layer(s_bt_icon_layer), true);
   layer_set_hidden(text_layer_get_layer(s_steps_layer), true);
+  layer_set_hidden(text_layer_get_layer(s_hr_layer), true);
   layer_set_hidden(text_layer_get_layer(s_weather_layer), true);
   layer_set_hidden(text_layer_get_layer(s_weather_icon_layer), true);
   layer_set_hidden(text_layer_get_layer(s_sunrise_layer), true);
@@ -620,6 +641,7 @@ static void prv_unobstructed_did_change(void *context) {
   if (obstructed) {
     layer_set_hidden(text_layer_get_layer(s_bt_icon_layer), true);
     layer_set_hidden(text_layer_get_layer(s_steps_layer), true);
+    layer_set_hidden(text_layer_get_layer(s_hr_layer), true);
     layer_set_hidden(text_layer_get_layer(s_weather_layer), true);
     layer_set_hidden(text_layer_get_layer(s_weather_icon_layer), true);
     layer_set_hidden(text_layer_get_layer(s_sunrise_layer), true);
@@ -629,6 +651,7 @@ static void prv_unobstructed_did_change(void *context) {
     layer_set_hidden(text_layer_get_layer(s_bt_icon_layer),
       connection_service_peek_pebble_app_connection());
     layer_set_hidden(text_layer_get_layer(s_steps_layer), !settings.ShowSteps);
+    layer_set_hidden(text_layer_get_layer(s_hr_layer), (!settings.ShowHR || !(PBL_DISPLAY_HEIGHT >= 228)));
     layer_set_hidden(text_layer_get_layer(s_weather_layer), !settings.ShowWeather);
     layer_set_hidden(text_layer_get_layer(s_weather_icon_layer), !settings.ShowWeather);
     layer_set_hidden(text_layer_get_layer(s_sunrise_layer), !settings.ShowSun);
@@ -718,8 +741,13 @@ static void main_window_load(Window *window) {
 
   // Create weather TextLayer
   int weather_y = bar_y - (info_height * 2) - (bounds.size.h / 15);
+  int weather_width = ((bounds.size.w / 10) * 4);
+  int weather_x = 0;
+  if (PBL_DISPLAY_HEIGHT >= 228) {
+    weather_width = (weather_width * 0.75);
+  }
   s_weather_layer = text_layer_create(
-      GRect(0, weather_y, ((bounds.size.w / 10) * 4), (info_height + 4)));
+      GRect(weather_x, weather_y, weather_width, (info_height + 4)));
   text_layer_set_background_color(s_weather_layer, GColorClear);
   text_layer_set_text_color(s_weather_layer, settings.TextColor);
   text_layer_set_font(s_weather_layer, s_info_font);
@@ -727,8 +755,10 @@ static void main_window_load(Window *window) {
 
   // Create weather icon TextLayer
   int weather_icon_y = weather_y + (info_padding * 0.75);
+  int weather_icon_width = ((bounds.size.w / 10) * 2);
+  int weather_icon_x = weather_width;
   s_weather_icon_layer = text_layer_create(
-      GRect(((bounds.size.w / 10) * 4), weather_icon_y, ((bounds.size.w / 10) * 2), (info_height + 4)));
+      GRect(weather_icon_x, weather_icon_y, weather_icon_width, (info_height + 4)));
   text_layer_set_background_color(s_weather_icon_layer, GColorClear);
   text_layer_set_text_color(s_weather_icon_layer, settings.TextColor);
   text_layer_set_font(s_weather_icon_layer, s_weather_font);
@@ -736,12 +766,28 @@ static void main_window_load(Window *window) {
 
   // Create steps TextLayer
   int steps_y = weather_y;
+  int steps_width = ((bounds.size.w / 10) * 4);
+  int steps_x = weather_icon_x + weather_icon_width;
+  if (PBL_DISPLAY_HEIGHT >= 228) {
+    steps_width = (steps_width * 0.75);
+  }
   s_steps_layer = text_layer_create(
-      GRect(((bounds.size.w / 10) * 6), steps_y, ((bounds.size.w / 10) * 4), (info_height + 4)));
+      GRect(steps_x, steps_y, steps_width, (info_height + 4)));
   text_layer_set_background_color(s_steps_layer, GColorClear);
   text_layer_set_text_color(s_steps_layer, settings.TextColor);
   text_layer_set_font(s_steps_layer, s_info_font);
   text_layer_set_text_alignment(s_steps_layer, GTextAlignmentCenter);
+
+  // Create HR TextLayer
+  int hr_y = weather_y;
+  int hr_width = ((bounds.size.w / 10) * 2);
+  int hr_x = steps_x + steps_width;
+  s_hr_layer = text_layer_create(
+      GRect(hr_x, hr_y, hr_width, (info_height + 4)));
+  text_layer_set_background_color(s_hr_layer, GColorClear);
+  text_layer_set_text_color(s_hr_layer, settings.TextColor);
+  text_layer_set_font(s_hr_layer, s_info_font);
+  text_layer_set_text_alignment(s_hr_layer, GTextAlignmentCenter);
 
   // Create sun TextLayer
   int sun_y = weather_y + info_height;
@@ -785,6 +831,7 @@ static void main_window_load(Window *window) {
   layer_add_child(s_window_layer, text_layer_get_layer(s_weather_layer));
   layer_add_child(s_window_layer, text_layer_get_layer(s_weather_icon_layer));
   layer_add_child(s_window_layer, text_layer_get_layer(s_steps_layer));
+  layer_add_child(s_window_layer, text_layer_get_layer(s_hr_layer));
   layer_add_child(s_window_layer, text_layer_get_layer(s_sunrise_layer));
   layer_add_child(s_window_layer, text_layer_get_layer(s_sunset_layer));
   layer_add_child(s_window_layer, text_layer_get_layer(s_moon_layer));
@@ -815,6 +862,7 @@ static void main_window_unload(Window *window) {
   text_layer_destroy(s_weather_layer);
   text_layer_destroy(s_weather_icon_layer);
   text_layer_destroy(s_steps_layer);
+  text_layer_destroy(s_hr_layer);
   text_layer_destroy(s_sunrise_layer);
   text_layer_destroy(s_sunset_layer);
   text_layer_destroy(s_moon_layer);
@@ -846,6 +894,9 @@ static void init() {
   }
   if (settings.ShowSteps){
     update_steps();
+  }
+  if (settings.ShowHR){
+    update_hr();
   }
   if (settings.ShowSun){
     update_sun();
