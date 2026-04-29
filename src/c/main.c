@@ -17,6 +17,7 @@ typedef struct ClaySettings {
   bool TemperatureUnit;
   int WeatherInterval;
   bool ShowDate;
+  bool AltDate;
   bool ShowSteps;
   bool ShowSun;
   bool ShowMoon;
@@ -73,6 +74,7 @@ static void prv_default_settings() {
   settings.TextColor = settings.TextColorDay;
   settings.NightTheme = false;
   settings.ShowDate = false;
+  settings.AltDate = false;
   settings.ShowWeather = false;
   settings.TemperatureUnit = false;
   settings.WeatherInterval = 3;
@@ -240,9 +242,18 @@ static void update_time() {
   strftime(s_time_buffer, sizeof(s_time_buffer), clock_is_24h_style() ?
                                                     "%H:%M" : "%I:%M", tick_time);
   text_layer_set_text(s_time_layer, s_time_buffer);
+}
+
+static void update_date() {
+  time_t now = time(NULL);
+  struct tm *tick_time = localtime(&now);
 
   static char s_date_buffer[16];
-  strftime(s_date_buffer, sizeof(s_date_buffer), "%a %b %d", tick_time);
+  if (settings.AltDate) {
+    strftime(s_date_buffer, sizeof(s_date_buffer), "%Y-%m-%d", tick_time);
+  } else {
+    strftime(s_date_buffer, sizeof(s_date_buffer), "%a %b %d", tick_time);
+  }
   text_layer_set_text(s_date_layer, s_date_buffer);
 }
 
@@ -294,6 +305,7 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
 
   // run every hour
   if (tick_time->tm_min % 60 == 0) {
+    update_date();
     if (settings.PeriodicVibrate) {
       vibes_double_pulse();
     }
@@ -382,6 +394,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   bool prev_ShowWeather = settings.ShowWeather;
   bool prev_TemperatureUnit = settings.TemperatureUnit;
   bool prev_ShowPhoneBattery = settings.ShowPhoneBattery;
+  bool prev_AltDate = settings.AltDate;
 
   // Check for Clay settings data
   Tuple *bg_color_day_t = dict_find(iterator, MESSAGE_KEY_BackgroundColorDay);
@@ -407,6 +420,10 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   Tuple *show_date_t = dict_find(iterator, MESSAGE_KEY_ShowDate);
   if (show_date_t) {
     settings.ShowDate = show_date_t->value->int32 == 1;
+  }
+  Tuple *alt_date_t = dict_find(iterator, MESSAGE_KEY_AltDate);
+  if (alt_date_t) {
+    settings.AltDate = alt_date_t->value->int32 == 1;
   }
   Tuple *show_weather_t = dict_find(iterator, MESSAGE_KEY_ShowWeather);
   if (show_weather_t) {
@@ -488,7 +505,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   }
 
   // Save and apply if any settings were changed
-  if (bg_color_day_t || text_color_day_t || bg_color_night_t || text_color_night_t || night_theme_t || temp_unit_t || show_weather_t || show_date_t || show_steps_t || show_sun_t || show_moon_t || show_phone_battery_t) {
+  if (bg_color_day_t || text_color_day_t || bg_color_night_t || text_color_night_t || night_theme_t || temp_unit_t || show_weather_t || show_date_t || alt_date_t || show_steps_t || show_sun_t || show_moon_t || show_phone_battery_t) {
     
     // if show battery was toggled
     if (prev_ShowPhoneBattery != settings.ShowPhoneBattery) {
@@ -506,7 +523,8 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     
     prv_save_settings();
     prv_update_display();
-    // Only request data when a setting was actually changed
+
+    // Request data when a setting was changed
     bool requestSun = (!prev_ShowSun && settings.ShowSun) ||
                    (!prev_ShowMoon && settings.ShowMoon) ||
                    (!prev_NightTheme && settings.NightTheme);
@@ -529,6 +547,11 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
         dict_write_uint8(iter, MESSAGE_KEY_UNSUBSCRIBE_BATTERY, 1);
       }
       app_message_outbox_send();
+    }
+
+    // update if date format changes
+    if (prev_AltDate != settings.AltDate) {
+      update_date();
     }
   } else if (temp_tuple || conditions_tuple || sunrise_tuple || sunset_tuple || moon_tuple || battery_tuple) {
     prv_save_settings();
@@ -791,6 +814,7 @@ static void init() {
 
   // set initial values
   update_time();
+  update_date();
   if (settings.ShowWeather){
     update_weather();
   }
