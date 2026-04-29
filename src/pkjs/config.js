@@ -65,6 +65,13 @@ module.exports = [
       },
       {
         "type": "toggle",
+        "messageKey": "AltDate",
+        "label": "Alternate Date Format",
+        "description": "Toggle between `Day Mon DD` and `YYYY-MM-DD`",
+        "defaultValue": false
+      },
+      {
+        "type": "toggle",
         "messageKey": "ShowWeather",
         "label": "Show Weather",
         "defaultValue": false
