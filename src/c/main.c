@@ -526,7 +526,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
         dict_write_uint8(iter, MESSAGE_KEY_REQUEST_BATTERY, 1);
       }
       if (unsibscribeBattery) {
-        dict_write_uint8(iter, MESSAGE_KEY_REQUEST_BATTERY_UNSUBSCRIBE, 1);
+        dict_write_uint8(iter, MESSAGE_KEY_UNSUBSCRIBE_BATTERY, 1);
       }
       app_message_outbox_send();
     }
@@ -822,14 +822,6 @@ static void init() {
   const int inbox_size = 256;
   const int outbox_size = 256;
   app_message_open(inbox_size, outbox_size);
-
-  // set initial values
-  if (settings.ShowPhoneBattery) {
-    DictionaryIterator *iter;
-    app_message_outbox_begin(&iter);
-    dict_write_uint8(iter, MESSAGE_KEY_REQUEST_BATTERY, 1);
-    app_message_outbox_send();
-  }
 }
 
 static void deinit() {

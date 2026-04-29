@@ -372,7 +372,9 @@ Pebble.addEventListener('ready',
     // Get the initial data
     //getSunInfo();
     //getWeather();
-    //getBattery();
+    if (localStorage.getItem('phoneBatteryEnabled') == 1) {
+      getBattery();
+    }
   }
 );
 
@@ -390,10 +392,14 @@ Pebble.addEventListener('appmessage',
     }
     // Check if this is a battery refresh request
     if (e.payload['REQUEST_BATTERY']) {
+      var batteryToggle = 1;
+      localStorage.setItem('phoneBatteryEnabled', batteryToggle);
       getBattery();
     }
     // Check if this is a battery unsubscribe request
-    if (e.payload['REQUEST_BATTERY_UNSUBSCRIBE']) {
+    if (e.payload['UNSUBSCRIBE_BATTERY']) {
+      var batteryToggle = 0;
+      localStorage.setItem('phoneBatteryEnabled', batteryToggle);
       stopBattery();
     }
   }
