@@ -28,9 +28,11 @@ A simple, clean Pebble watchface with a large, easy-to-read font. Displays the e
 
 ## Screenshots
 
-![screenshot-flint-0](screenshots/pebble_screenshot.png)
-![screenshot-flint-1](screenshots/pebble_screenshot_2026-04-21_13-14-27.png)
-![screenshot-flint-2](screenshots/pebble_screenshot_2026-04-21_13-15-46.png)
-![screenshot-basalt-0](screenshots/pebble_screenshot_2026-04-21_14-03-35.png)
-![screenshot-basalt-1](screenshots/pebble_screenshot_2026-04-21_14-05-31.png)
+![screenshot-flint-0](screenshots/pebble_screenshot_2026-04-29_13-37.png)
+![screenshot-flint-1](screenshots/pebble_screenshot_2026-04-27_07-24.png)
+![screenshot-flint-2](screenshots/pebble_screenshot_2026-04-29_13-45.png)
+![screenshot-flint-3](screenshots/pebble_screenshot_2026-04-21_13-15-46.png)
 
+![screenshot-emery-0](screenshots/pebble_screenshot_2026-04-29_06-23-32.png)
+![screenshot-emery-1](screenshots/pebble_screenshot_2026-04-29_14-08-19.png)
+![screenshot-emery-2](screenshots/pebble_screenshot_2026-04-29_21-43-30.png)
