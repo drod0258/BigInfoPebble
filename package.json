@@ -66,8 +66,11 @@
       "REQUEST_BATTERY",
       "UNSUBSCRIBE_BATTERY",
       "BATTERY",
+      "REQUEST_GPS",
       "GpsLat",
-      "GpsLon"
+      "GpsLon",
+      "Latitude",
+      "Longitude"
     ],
     "resources": {
       "media": [

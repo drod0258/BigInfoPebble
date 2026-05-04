@@ -272,6 +272,30 @@ function stopBattery() {
 }
 // end battery functions
 
+// gps functions
+function locationSuccessGPS(pos) {
+  // coordinates
+  var latitude = Math.round(pos.coords.latitude * 1000000);
+  var longitude = Math.round(pos.coords.longitude * 1000000);
+
+  // Assemble dictionary
+  var dictionary = {
+    "GpsLat": latitude,
+    "GpsLon": longitude
+  };
+
+  // Send to Pebble
+  Pebble.sendAppMessage(dictionary,
+    function(e) {
+      console.log('GPS info sent to Pebble successfully!');
+    },
+    function(e) {
+      console.log('Error sending gps info to Pebble!');
+    }
+  );
+}
+// end gps functions
+
 // Convert Open-Meteo weather code to human-readable condition
 function weatherCodeToCondition(code) {
   if (code === 0) return 0; //'Clear';
@@ -349,6 +373,14 @@ function locationError(err) {
   console.log('Error requesting location!');
 }
 
+function getGPS() {
+  navigator.geolocation.getCurrentPosition(
+    locationSuccessGPS,
+    locationError,
+    { timeout: 15000, maximumAge: 60000 }
+  );
+}
+
 function getWeather() {
   navigator.geolocation.getCurrentPosition(
     locationSuccessWeather,
@@ -372,6 +404,7 @@ Pebble.addEventListener('ready',
     // Get the initial data
     //getSunInfo();
     //getWeather();
+    //getGPS();
     if (localStorage.getItem('phoneBatteryEnabled') == 1) {
       getBattery();
     }
@@ -389,6 +422,10 @@ Pebble.addEventListener('appmessage',
     // Check if this is a weather refresh request
     if (e.payload['REQUEST_WEATHER']) {
       getWeather();
+    }
+    // Check if this is a gps refresh request
+    if (e.payload['REQUEST_GPS']) {
+      getGPS();
     }
     // Check if this is a battery refresh request
     if (e.payload['REQUEST_BATTERY']) {

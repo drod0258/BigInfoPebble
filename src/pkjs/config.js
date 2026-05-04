@@ -136,21 +136,23 @@ module.exports = [
       },
       {
         "type": "input",
-        "messageKey": "GpsLat",
+        "messageKey": "Latitude",
         "defaultValue": "",
         "label": "Manual Location - Latitude",
         "attributes": {
-          "placeholder": "eg: 51.4962 (leave blank to use GPS)"
+          "placeholder": "eg: 51.4962 (leave blank to use GPS)",
+          "type": "number"
         }
       },
       {
         "type": "input",
-        "messageKey": "GpsLon",
+        "messageKey": "Longitude",
         "defaultValue": "",
         "label": "Manual Location - Longitude",
         "description": "Leave both blank to use GPS location for sunrise & sunset times. You can use <a href =https://www.google.com/maps>Google Maps</a> or <a href =https://www.openstreetmap.org/>OpenStreetMap</a> to find latitude & longitude.",
         "attributes": {
-          "placeholder": "eg: -0.0989 (leave blank to use GPS)"
+          "placeholder": "eg: -0.0989 (leave blank to use GPS)",
+          "type": "number"
         }
       }
     ]

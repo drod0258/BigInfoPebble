@@ -26,9 +26,10 @@ typedef struct ClaySettings {
   bool ShowPhoneBattery;
   bool PeriodicVibrate;
   bool BluetoothVibrate;
-  char GpsLat[12];
-  char GpsLon[12];
+  int Latitude;
+  int Longitude;
   // storage
+  bool PhoneGPS;
   bool IsDay;
   int SunriseTime;
   int SunsetTime;
@@ -90,9 +91,10 @@ static void prv_default_settings() {
   settings.ShowPhoneBattery = false;
   settings.PeriodicVibrate = false;
   settings.BluetoothVibrate = false;
-  snprintf(settings.GpsLat, sizeof(settings.GpsLat), "40.7128");
-  snprintf(settings.GpsLon, sizeof(settings.GpsLon), "-74.0060");
+  settings.Latitude = 0;
+  settings.Longitude = 0;
   // storage
+  settings.PhoneGPS=true;
   settings.IsDay=false;
   settings.SunriseTime=1;
   settings.SunsetTime=2359;
@@ -298,24 +300,29 @@ static void update_steps() {
 }
 
 static void update_sun() {
-  time_t now = time(NULL);
-  struct tm *tick_time = localtime(&now);
-  int time_year=tick_time->tm_year;
-  int time_month=tick_time->tm_mon + 1;
-  int time_day=tick_time->tm_mday;
-  time_year = 2026;
-  float sunriseTime = calcSunRise(time_year, time_month, time_day, 40.0, -74.0, 90.83f);
-  float sunsetTime = calcSunSet(time_year, time_month, time_day, 40.0f, -74.0, 90.83f);
-  settings.SunriseTime = (int)(60*(sunriseTime-((int)(sunriseTime)))) + ((int)sunriseTime * 100);
-  settings.SunsetTime = (int)(60*(sunsetTime-((int)(sunsetTime)))) + ((int)sunsetTime * 100);
-  //todo: convert to local timezone, use gpsLat and gpsLon after converting to float
-
   static char sunrise_buffer[6];
   static char sunset_buffer[6];
   snprintf(sunrise_buffer, sizeof(sunrise_buffer), "%02d:%02d", (settings.SunriseTime / 100), (settings.SunriseTime % 100));
   snprintf(sunset_buffer, sizeof(sunset_buffer), "%02d:%02d", (settings.SunsetTime / 100), (settings.SunsetTime % 100));
   text_layer_set_text(s_sunrise_layer, sunrise_buffer);
   text_layer_set_text(s_sunset_layer, sunset_buffer);
+}
+
+static void calculate_sun() {
+  time_t now = time(NULL);
+  struct tm *tick_time = localtime(&now);
+  struct tm *gmt_time = gmtime(&now);
+  int time_year=tick_time->tm_year + 1900;
+  int time_month=tick_time->tm_mon + 1;
+  int time_day=tick_time->tm_mday;
+  int timezoneOffset = (tick_time->tm_hour) - (gmt_time->tm_hour);
+  float latitude = (float)settings.Latitude / 1000000.0f;
+  float longitude = (float)settings.Longitude / 1000000.0f;
+  float sunriseTime = calcSunRise(time_year, time_month, time_day, latitude, longitude, ZENITH_OFFICIAL);
+  float sunsetTime = calcSunSet(time_year, time_month, time_day, latitude, longitude, ZENITH_OFFICIAL);
+  settings.SunriseTime = (int)(60*(sunriseTime-((int)(sunriseTime)))) + (((int)sunriseTime + timezoneOffset) * 100);
+  settings.SunsetTime = (int)(60*(sunsetTime-((int)(sunsetTime)))) + (((int)sunsetTime + timezoneOffset) * 100);
+  prv_save_settings();
 }
 
 static void update_moon() {
@@ -339,6 +346,7 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
     if (settings.ShowWeather || settings.ShowSun || settings.ShowMoon || settings.NightTheme) {
       bool requestWeather = false;
       bool requestSun = false;
+      bool requestGPS = false;
       // Get weather update every 1-6 hours
       if (settings.ShowWeather && tick_time->tm_hour % settings.WeatherInterval == 0) {
         requestWeather = true;
@@ -347,7 +355,7 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
       if ((settings.ShowSun || settings.ShowMoon || settings.NightTheme) && tick_time->tm_hour % 24 == 0) {
         requestSun = true;
       }
-      if (requestWeather || requestSun) {
+      if (requestWeather || requestSun || requestGPS) {
         DictionaryIterator *iter;
         app_message_outbox_begin(&iter);
         if (requestSun) {
@@ -355,6 +363,9 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
         }
         if (requestWeather) {
           dict_write_uint8(iter, MESSAGE_KEY_REQUEST_WEATHER, 1);
+        }
+        if (requestGPS) {
+          dict_write_uint8(iter, MESSAGE_KEY_REQUEST_GPS, 1);
         }
         app_message_outbox_send();
       }
@@ -421,6 +432,9 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   bool prev_TemperatureUnit = settings.TemperatureUnit;
   bool prev_ShowPhoneBattery = settings.ShowPhoneBattery;
   bool prev_AltDate = settings.AltDate;
+  bool prev_PhoneGPS = settings.PhoneGPS;
+  bool prev_Lat = settings.Latitude;
+  bool prev_Lon = settings.Longitude;
 
   // Check for Clay settings data
   Tuple *bg_color_day_t = dict_find(iterator, MESSAGE_KEY_BackgroundColorDay);
@@ -493,14 +507,30 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     settings.BluetoothVibrate = disconnect_alert_t->value->int32 == 1;
   }
 
-
-  Tuple *gps_lat_t = dict_find(iterator, MESSAGE_KEY_GpsLat);
-  if (gps_lat_t) {    
-    snprintf(settings.GpsLat, sizeof(settings.GpsLat), "%s", gps_lat_t->value->cstring);
+  // check for manual gps
+  //TODO: convert to float, or multiply by 1000000 then convert back for math operations
+  //TODO: if gps values change, then re-calculate sun info
+  Tuple *man_lat_t = dict_find(iterator, MESSAGE_KEY_Latitude);
+  Tuple *man_lon_t = dict_find(iterator, MESSAGE_KEY_Longitude);
+  if (man_lat_t && man_lon_t) {
+    settings.Latitude = man_lat_t->value->int32;  
+    settings.Longitude = man_lon_t->value->int32;
+    // if values are blank/null/zero, then use PhoneGPS
+    if (settings.Latitude && settings.Longitude) {
+      settings.PhoneGPS = false;
+    } else {
+      settings.PhoneGPS = true;
+    }
   }
+  Tuple *gps_lat_t = dict_find(iterator, MESSAGE_KEY_GpsLat);
   Tuple *gps_lon_t = dict_find(iterator, MESSAGE_KEY_GpsLon);
-  if (gps_lon_t) {    
-    snprintf(settings.GpsLon, sizeof(settings.GpsLat), "%s", gps_lon_t->value->cstring);
+  if (gps_lat_t && gps_lon_t && settings.PhoneGPS) {
+    settings.Latitude = gps_lat_t->value->int32;  
+    settings.Longitude = gps_lon_t->value->int32;
+  }
+  if ((prev_Lat != settings.Latitude) || (prev_Lon != settings.Longitude)) {
+    calculate_sun();
+    update_sun();
   }
 
   // Check for weather data
@@ -571,7 +601,8 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     bool requestWeather = ((prev_TemperatureUnit != settings.TemperatureUnit) || !prev_ShowWeather) && settings.ShowWeather;
     bool requestBattery = (!prev_ShowPhoneBattery && settings.ShowPhoneBattery);
     bool unsibscribeBattery = (prev_ShowPhoneBattery && !settings.ShowPhoneBattery);
-    if (requestSun || requestWeather || requestBattery || unsibscribeBattery) {
+    bool requestGPS = (!prev_PhoneGPS && settings.PhoneGPS);
+    if (requestSun || requestWeather || requestBattery || unsibscribeBattery || requestGPS) {
       DictionaryIterator *iter;
       app_message_outbox_begin(&iter);
       if (requestSun) {
@@ -585,6 +616,9 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
       }
       if (unsibscribeBattery) {
         dict_write_uint8(iter, MESSAGE_KEY_UNSUBSCRIBE_BATTERY, 1);
+      }
+      if (requestGPS) {
+        dict_write_uint8(iter, MESSAGE_KEY_REQUEST_GPS, 1);
       }
       app_message_outbox_send();
     }
