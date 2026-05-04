@@ -354,6 +354,11 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
       // Get sun & moon info every 24 hours
       if ((settings.ShowSun || settings.ShowMoon || settings.NightTheme) && tick_time->tm_hour % 24 == 0) {
         requestSun = true;
+        calculate_sun();
+        update_sun();
+        if (settings.PhoneGPS) {
+          requestGPS = true
+        }
       }
       if (requestWeather || requestSun || requestGPS) {
         DictionaryIterator *iter;
