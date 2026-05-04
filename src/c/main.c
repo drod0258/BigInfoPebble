@@ -1,4 +1,5 @@
 #include <pebble.h>
+#include "suncalc.h"
 
 // Persistent storage key
 #define SETTINGS_KEY 1
@@ -25,6 +26,8 @@ typedef struct ClaySettings {
   bool ShowPhoneBattery;
   bool PeriodicVibrate;
   bool BluetoothVibrate;
+  char GpsLat[12];
+  char GpsLon[12];
   // storage
   bool IsDay;
   int SunriseTime;
@@ -82,11 +85,13 @@ static void prv_default_settings() {
   settings.TemperatureUnit = false;
   settings.WeatherInterval = 3;
   settings.ShowSteps = false;
-  settings.ShowSun = false;
+  settings.ShowSun = true;
   settings.ShowMoon = false;
   settings.ShowPhoneBattery = false;
   settings.PeriodicVibrate = false;
   settings.BluetoothVibrate = false;
+  snprintf(settings.GpsLat, sizeof(settings.GpsLat), "40.7128");
+  snprintf(settings.GpsLon, sizeof(settings.GpsLon), "-74.0060");
   // storage
   settings.IsDay=false;
   settings.SunriseTime=1;
@@ -293,6 +298,18 @@ static void update_steps() {
 }
 
 static void update_sun() {
+  time_t now = time(NULL);
+  struct tm *tick_time = localtime(&now);
+  int time_year=tick_time->tm_year;
+  int time_month=tick_time->tm_mon + 1;
+  int time_day=tick_time->tm_mday;
+  time_year = 2026;
+  float sunriseTime = calcSunRise(time_year, time_month, time_day, 40.0, -74.0, 90.83f);
+  float sunsetTime = calcSunSet(time_year, time_month, time_day, 40.0f, -74.0, 90.83f);
+  settings.SunriseTime = (int)(60*(sunriseTime-((int)(sunriseTime)))) + ((int)sunriseTime * 100);
+  settings.SunsetTime = (int)(60*(sunsetTime-((int)(sunsetTime)))) + ((int)sunsetTime * 100);
+  //todo: convert to local timezone, use gpsLat and gpsLon after converting to float
+
   static char sunrise_buffer[6];
   static char sunset_buffer[6];
   snprintf(sunrise_buffer, sizeof(sunrise_buffer), "%02d:%02d", (settings.SunriseTime / 100), (settings.SunriseTime % 100));
@@ -474,6 +491,16 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   Tuple *disconnect_alert_t = dict_find(iterator, MESSAGE_KEY_BluetoothVibrate);
   if (disconnect_alert_t) {
     settings.BluetoothVibrate = disconnect_alert_t->value->int32 == 1;
+  }
+
+
+  Tuple *gps_lat_t = dict_find(iterator, MESSAGE_KEY_GpsLat);
+  if (gps_lat_t) {    
+    snprintf(settings.GpsLat, sizeof(settings.GpsLat), "%s", gps_lat_t->value->cstring);
+  }
+  Tuple *gps_lon_t = dict_find(iterator, MESSAGE_KEY_GpsLon);
+  if (gps_lon_t) {    
+    snprintf(settings.GpsLon, sizeof(settings.GpsLat), "%s", gps_lon_t->value->cstring);
   }
 
   // Check for weather data
