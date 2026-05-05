@@ -323,6 +323,8 @@ function weatherInfo(pos) {
       var sunsetParts = json.daily.sunset[0].split('T')[1].split(':');                                                                     
       var sunriseint = parseInt(sunriseParts[0]) * 100 + parseInt(sunriseParts[1]);                                                        
       var sunsetint = parseInt(sunsetParts[0]) * 100 + parseInt(sunsetParts[1]);
+      console.log('sunrise: ' + sunriseint);
+      console.log('sunset: ' + sunsetint);
 
       // Assemble dictionary
       var dictionary = {
@@ -418,6 +420,7 @@ Pebble.addEventListener('appmessage',
 
     // Check for manual coordinates
     if (dict.hasOwnProperty('Latitude') && dict.hasOwnProperty('Longitude')) {
+      console.log('manual coordinates recieved');
       var lat = dict['Latitude'];
       var lon = dict['Longitude'];
       // If BOTH fields have content and are not just empty strings save to localStorage
@@ -425,10 +428,13 @@ Pebble.addEventListener('appmessage',
         var manualCoordinates = 1;
         localStorage.setItem('Latitude', lat);
         localStorage.setItem('Longitude', lon);
+        console.log('latitude: ' + (lat / 1000000));
+        console.log('longitude: ' + (lon / 1000000));
       } else {
         var manualCoordinates = 0;
         localStorage.removeItem('Latitude');
         localStorage.removeItem('Longitude');
+        console.log('manual coordinates disabled');
       }
       localStorage.setItem('manualCoordinates', manualCoordinates);
     }
