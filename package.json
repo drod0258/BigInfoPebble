@@ -65,7 +65,9 @@
       "ShowPhoneBattery",
       "REQUEST_BATTERY",
       "UNSUBSCRIBE_BATTERY",
-      "BATTERY"
+      "BATTERY",
+      "Latitude",
+      "Longitude"
     ],
     "resources": {
       "media": [

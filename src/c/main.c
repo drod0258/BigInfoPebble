@@ -25,6 +25,8 @@ typedef struct ClaySettings {
   bool ShowPhoneBattery;
   bool PeriodicVibrate;
   bool BluetoothVibrate;
+  int Latitude;
+  int Longitude;
   // storage
   bool IsDay;
   int SunriseTime;
@@ -474,6 +476,14 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   Tuple *disconnect_alert_t = dict_find(iterator, MESSAGE_KEY_BluetoothVibrate);
   if (disconnect_alert_t) {
     settings.BluetoothVibrate = disconnect_alert_t->value->int32 == 1;
+  }
+
+  // check for manual coordinates
+  Tuple *man_lat_t = dict_find(iterator, MESSAGE_KEY_Latitude);
+  Tuple *man_lon_t = dict_find(iterator, MESSAGE_KEY_Longitude);
+  if (man_lat_t && man_lon_t) {
+    settings.Latitude = (int)man_lat_t->value->int32;
+    settings.Longitude = (int)man_lon_t->value->int32;
   }
 
   // Check for weather data
