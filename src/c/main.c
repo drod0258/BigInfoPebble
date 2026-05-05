@@ -589,14 +589,15 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     prv_update_display();
 
     // Request data when a setting was changed
+    bool updateCoordinates = (prev_Lat != settings.Latitude) || (prev_Lon != settings.Longitude);
     bool requestSun = (!prev_ShowSun && settings.ShowSun) ||
                    (!prev_ShowMoon && settings.ShowMoon) ||
-                   (!prev_NightTheme && settings.NightTheme);
-    bool requestWeather = ((prev_TemperatureUnit != settings.TemperatureUnit) || !prev_ShowWeather) && settings.ShowWeather;
+                   (!prev_NightTheme && settings.NightTheme) ||
+                   (updateCoordinates && (settings.ShowSun || settings.ShowMoon || settings.NightTheme));
+    bool requestWeather = ((prev_TemperatureUnit != settings.TemperatureUnit) || !prev_ShowWeather || updateCoordinates) && settings.ShowWeather;
     bool requestBattery = (!prev_ShowPhoneBattery && settings.ShowPhoneBattery);
     bool unsibscribeBattery = (prev_ShowPhoneBattery && !settings.ShowPhoneBattery);
-    bool sendCoordinates = (prev_Lat != settings.Latitude) || (prev_Lon != settings.Longitude);
-    if (requestSun || requestWeather || requestBattery || unsibscribeBattery || sendCoordinates) {
+    if (requestSun || requestWeather || requestBattery || unsibscribeBattery || updateCoordinates) {
       DictionaryIterator *iter;
       app_message_outbox_begin(&iter);
       if (requestSun) {
@@ -611,7 +612,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
       if (unsibscribeBattery) {
         dict_write_uint8(iter, MESSAGE_KEY_UNSUBSCRIBE_BATTERY, 1);
       }
-      if (sendCoordinates) {
+      if (updateCoordinates) {
         // Send empty string if coordinates are not set, otherwise send scaled int
         if (strcmp(man_lat_t->value->cstring,"") == 0) {
           dict_write_cstring(iter, MESSAGE_KEY_Latitude, "");
