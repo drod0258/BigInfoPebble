@@ -309,8 +309,8 @@ static void update_moon() {
 
 int parse_coordinates(char *coor_str) {
   char *dot = strchr(coor_str, '.');
-  int32_t whole_part = 0;
-  int32_t frac_part = 0;
+  int whole_part = 0;
+  int frac_part = 0;
   
   if (dot) {
     // Null-terminate at the dot to isolate the whole number
@@ -613,15 +613,15 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
       }
       if (sendCoordinates) {
         // Send empty string if coordinates are not set, otherwise send scaled int
-        if (man_lat_t->value->cstring == "") {
-          dict_write_string(iter, MESSAGE_KEY_Latitude, "");
+        if (strcmp(man_lat_t->value->cstring,"") == 0) {
+          dict_write_cstring(iter, MESSAGE_KEY_Latitude, "");
         } else {
-          dict_write_uint8(iter, MESSAGE_KEY_Latitude, settings.Latitude);
+          dict_write_int32(iter, MESSAGE_KEY_Latitude, settings.Latitude);
         }
-        if (man_lon_t->value->cstring == "") {
-          dict_write_string(iter, MESSAGE_KEY_Longitude, "");
+        if (strcmp(man_lon_t->value->cstring,"") == 0) {
+          dict_write_cstring(iter, MESSAGE_KEY_Longitude, "");
         } else {
-          dict_write_uint8(iter, MESSAGE_KEY_Longitude, settings.Longitude);
+          dict_write_int32(iter, MESSAGE_KEY_Longitude, settings.Longitude);
         }
       }
       app_message_outbox_send();
