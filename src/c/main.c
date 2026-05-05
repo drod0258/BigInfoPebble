@@ -484,11 +484,13 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   // TODO: ensure value is stored as int(float * 1000000)
   Tuple *man_lat_t = dict_find(iterator, MESSAGE_KEY_Latitude);
   if (man_lat_t) {
-    settings.Latitude = (int)man_lat_t->value->int32;
+    float latFloat = man_lat_t->value->int32 / 1.0f;
+    settings.Latitude = (int)(latFloat * 1000000);
   }
   Tuple *man_lon_t = dict_find(iterator, MESSAGE_KEY_Longitude);
   if (man_lon_t) {
-    settings.Longitude = (int)man_lon_t->value->int32;
+    float lonFloat = man_lon_t->value->int32 / 1.0f;
+    settings.Longitude = (int)(lonFloat * 1000000);
   }
 
   // Check for weather data
