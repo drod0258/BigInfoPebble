@@ -406,6 +406,8 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   bool prev_TemperatureUnit = settings.TemperatureUnit;
   bool prev_ShowPhoneBattery = settings.ShowPhoneBattery;
   bool prev_AltDate = settings.AltDate;
+  bool prev_Lat = settings.Latitude;
+  bool prev_Lon = settings.Longitude;
 
   // Check for Clay settings data
   Tuple *bg_color_day_t = dict_find(iterator, MESSAGE_KEY_BackgroundColorDay);
@@ -479,10 +481,13 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   }
 
   // check for manual coordinates
+  // TODO: ensure value is stored as int(float * 1000000)
   Tuple *man_lat_t = dict_find(iterator, MESSAGE_KEY_Latitude);
-  Tuple *man_lon_t = dict_find(iterator, MESSAGE_KEY_Longitude);
-  if (man_lat_t && man_lon_t) {
+  if (man_lat_t) {
     settings.Latitude = (int)man_lat_t->value->int32;
+  }
+  Tuple *man_lon_t = dict_find(iterator, MESSAGE_KEY_Longitude);
+  if (man_lon_t) {
     settings.Longitude = (int)man_lon_t->value->int32;
   }
 
@@ -554,7 +559,8 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     bool requestWeather = ((prev_TemperatureUnit != settings.TemperatureUnit) || !prev_ShowWeather) && settings.ShowWeather;
     bool requestBattery = (!prev_ShowPhoneBattery && settings.ShowPhoneBattery);
     bool unsibscribeBattery = (prev_ShowPhoneBattery && !settings.ShowPhoneBattery);
-    if (requestSun || requestWeather || requestBattery || unsibscribeBattery) {
+    bool sendCoordinates = (prev_Lat != settings.Latitude) || (prev_Lon != settings.Longitude);
+    if (requestSun || requestWeather || requestBattery || unsibscribeBattery || sendCoordinates) {
       DictionaryIterator *iter;
       app_message_outbox_begin(&iter);
       if (requestSun) {
@@ -568,6 +574,10 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
       }
       if (unsibscribeBattery) {
         dict_write_uint8(iter, MESSAGE_KEY_UNSUBSCRIBE_BATTERY, 1);
+      }
+      if (sendCoordinates) {
+        dict_write_uint8(iter, MESSAGE_KEY_Latitude, settings.Latitude);
+        dict_write_uint8(iter, MESSAGE_KEY_Longitude, settings.Longitude);
       }
       app_message_outbox_send();
     }
