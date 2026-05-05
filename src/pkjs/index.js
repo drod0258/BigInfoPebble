@@ -176,7 +176,7 @@ SunCalc.getMoonIllumination = function (date) {
     angle: angle
   };
 };
-function sunCalcInfo (pos){
+function sunInfo (pos){
   var lat = pos.coords.latitude;
   var lon = pos.coords.longitude;
   var d = new Date();
@@ -242,7 +242,7 @@ function batteryLevelUnsubscribe(battery) {
 function batteryStatusFailure() {
   console.log("Error: Phone Battery function failed to resolve the BatteryManager object.");
 }
-function getBattery() {
+function getBatteryInfo() {
   // Test for old or new battery API
   if (navigator.battery) {
     console.log('Success: found navigator.battery API');
@@ -290,7 +290,7 @@ function weatherCodeToCondition(code) {
   return 15; //unknown
 }
 
-function locationSuccessWeather(pos) {
+function weatherInfo(pos) {
   // Construct Open-Meteo API URL
   var url = 'https://api.open-meteo.com/v1/forecast?' +
       'latitude=' + pos.coords.latitude +
@@ -323,6 +323,8 @@ function locationSuccessWeather(pos) {
       var sunsetParts = json.daily.sunset[0].split('T')[1].split(':');                                                                     
       var sunriseint = parseInt(sunriseParts[0]) * 100 + parseInt(sunriseParts[1]);                                                        
       var sunsetint = parseInt(sunsetParts[0]) * 100 + parseInt(sunsetParts[1]);
+      console.log('sunrise: ' + sunriseint);
+      console.log('sunset: ' + sunsetint);
 
       // Assemble dictionary
       var dictionary = {
@@ -349,20 +351,52 @@ function locationError(err) {
   console.log('Error requesting location!');
 }
 
-function getWeather() {
-  navigator.geolocation.getCurrentPosition(
-    locationSuccessWeather,
-    locationError,
-    { timeout: 15000, maximumAge: 60000 }
-  );
+function getWeatherInfo() {
+  if (localStorage.getItem('manualCoordinates') == 1) {
+    const mockPosition = {
+      coords: {
+        latitude: (localStorage.getItem('Latitude') / 1000000),
+        longitude: (localStorage.getItem('Longitude') / 1000000),
+        altitude: null,
+        accuracy: 100,
+        altitudeAccuracy: null,
+        heading: null,
+        speed: null
+      },
+      timestamp: Date.now()
+    };
+    weatherInfo(mockPosition);
+  } else {
+    navigator.geolocation.getCurrentPosition(
+      weatherInfo,
+      locationError,
+      { timeout: 15000, maximumAge: 60000 }
+    );
+  }
 }
 
 function getSunInfo() {
-  navigator.geolocation.getCurrentPosition(
-    sunCalcInfo,
-    locationError,
-    { timeout: 15000, maximumAge: 60000 }
-  );
+  if (localStorage.getItem('manualCoordinates') == 1) {
+    const mockPosition = {
+      coords: {
+        latitude: (localStorage.getItem('Latitude') / 1000000),
+        longitude: (localStorage.getItem('Longitude') / 1000000),
+        altitude: null,
+        accuracy: 100,
+        altitudeAccuracy: null,
+        heading: null,
+        speed: null
+      },
+      timestamp: Date.now()
+    };
+    sunInfo(mockPosition);
+  } else {
+    navigator.geolocation.getCurrentPosition(
+      sunInfo,
+      locationError,
+      { timeout: 15000, maximumAge: 60000 }
+    );
+  }
 }
 
 // Listen for when the watchface is opened
@@ -371,9 +405,9 @@ Pebble.addEventListener('ready',
     console.log('PebbleKit JS ready!');
     // Get the initial data
     //getSunInfo();
-    //getWeather();
+    //getWeatherInfo();
     if (localStorage.getItem('phoneBatteryEnabled') == 1) {
-      getBattery();
+      getBatteryInfo();
     }
   }
 );
@@ -382,22 +416,45 @@ Pebble.addEventListener('ready',
 Pebble.addEventListener('appmessage',
   function(e) {
     console.log('AppMessage received!');
+    var dict = e.payload;
+
+    // Check for manual coordinates
+    if (dict.hasOwnProperty('Latitude') && dict.hasOwnProperty('Longitude')) {
+      console.log('manual coordinates recieved');
+      var lat = dict['Latitude'];
+      var lon = dict['Longitude'];
+      // If BOTH fields have content and are not just empty strings save to localStorage
+      if (lat !== "" && lon !== "" && lat !== undefined && lon !== undefined) {
+        var manualCoordinates = 1;
+        localStorage.setItem('Latitude', lat);
+        localStorage.setItem('Longitude', lon);
+        console.log('latitude: ' + (lat / 1000000));
+        console.log('longitude: ' + (lon / 1000000));
+      } else {
+        var manualCoordinates = 0;
+        localStorage.removeItem('Latitude');
+        localStorage.removeItem('Longitude');
+        console.log('manual coordinates disabled');
+      }
+      localStorage.setItem('manualCoordinates', manualCoordinates);
+    }
+
     // Check if this is a sun info refresh request
-    if (e.payload['REQUEST_SUN']) {
+    if (dict['REQUEST_SUN']) {
       getSunInfo();
     }
     // Check if this is a weather refresh request
-    if (e.payload['REQUEST_WEATHER']) {
-      getWeather();
+    if (dict['REQUEST_WEATHER']) {
+      getWeatherInfo();
     }
     // Check if this is a battery refresh request
-    if (e.payload['REQUEST_BATTERY']) {
+    if (dict['REQUEST_BATTERY']) {
       var batteryToggle = 1;
       localStorage.setItem('phoneBatteryEnabled', batteryToggle);
-      getBattery();
+      getBatteryInfo();
     }
     // Check if this is a battery unsubscribe request
-    if (e.payload['UNSUBSCRIBE_BATTERY']) {
+    if (dict['UNSUBSCRIBE_BATTERY']) {
       var batteryToggle = 0;
       localStorage.setItem('phoneBatteryEnabled', batteryToggle);
       stopBattery();

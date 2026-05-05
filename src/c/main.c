@@ -25,6 +25,8 @@ typedef struct ClaySettings {
   bool ShowPhoneBattery;
   bool PeriodicVibrate;
   bool BluetoothVibrate;
+  int Latitude;
+  int Longitude;
   // storage
   bool IsDay;
   int SunriseTime;
@@ -305,6 +307,43 @@ static void update_moon() {
   text_layer_set_text(s_moon_layer, moon_phase[settings.MoonPhase]);
 }
 
+int parse_coordinates(char *coor_str) {
+  char *dot = strchr(coor_str, '.');
+  int whole_part = 0;
+  int frac_part = 0;
+  
+  if (dot) {
+    // Null-terminate at the dot to isolate the whole number
+    *dot = '\0';
+    whole_part = atoi(coor_str);
+    
+    // Move to the character after the dot
+    char *fractional_string = dot + 1;
+    int len = strlen(fractional_string);
+    frac_part = atoi(fractional_string);
+    
+    // Scale the fractional part to 6 decimal places
+    // e.g., if ".5" it becomes 500000. If ".5074" it becomes 507400
+    for (int i = len; i < 6; i++) {
+      frac_part *= 10;
+    }
+    // If the fractional part was longer than 6, truncate it
+    for (int i = len; i > 6; i--) {
+      frac_part /= 10;
+    }
+  } else {
+    // No decimal point found
+    whole_part = atoi(coor_str);
+  }
+
+  // Combine them (handling negative coordinates like -74.00)
+  if (whole_part < 0 || coor_str[0] == '-') {
+    return (whole_part * 1000000) - frac_part;
+  } else {
+    return (whole_part * 1000000) + frac_part;
+  }
+}
+
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   // run every minute
   update_time();
@@ -404,6 +443,8 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   bool prev_TemperatureUnit = settings.TemperatureUnit;
   bool prev_ShowPhoneBattery = settings.ShowPhoneBattery;
   bool prev_AltDate = settings.AltDate;
+  bool prev_Lat = settings.Latitude;
+  bool prev_Lon = settings.Longitude;
 
   // Check for Clay settings data
   Tuple *bg_color_day_t = dict_find(iterator, MESSAGE_KEY_BackgroundColorDay);
@@ -476,6 +517,16 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     settings.BluetoothVibrate = disconnect_alert_t->value->int32 == 1;
   }
 
+  // check for manual coordinates
+  Tuple *man_lat_t = dict_find(iterator, MESSAGE_KEY_Latitude);
+  if (man_lat_t) {
+    settings.Latitude = parse_coordinates(man_lat_t->value->cstring);
+  }
+  Tuple *man_lon_t = dict_find(iterator, MESSAGE_KEY_Longitude);
+  if (man_lon_t) {
+    settings.Longitude = parse_coordinates(man_lon_t->value->cstring);
+  }
+
   // Check for weather data
   Tuple *temp_tuple = dict_find(iterator, MESSAGE_KEY_TEMPERATURE);
   Tuple *conditions_tuple = dict_find(iterator, MESSAGE_KEY_CONDITIONS);
@@ -518,7 +569,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   }
 
   // Save and apply if any settings were changed
-  if (bg_color_day_t || text_color_day_t || bg_color_night_t || text_color_night_t || night_theme_t || temp_unit_t || show_weather_t || show_date_t || show_date2_t || alt_date_t || show_steps_t || show_sun_t || show_moon_t || show_phone_battery_t) {
+  if (bg_color_day_t || text_color_day_t || bg_color_night_t || text_color_night_t || night_theme_t || temp_unit_t || show_weather_t || show_date_t || show_date2_t || alt_date_t || show_steps_t || show_sun_t || show_moon_t || show_phone_battery_t || man_lat_t || man_lon_t) {
     
     // if show battery was toggled
     if (prev_ShowPhoneBattery != settings.ShowPhoneBattery) {
@@ -538,13 +589,15 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     prv_update_display();
 
     // Request data when a setting was changed
+    bool updateCoordinates = (prev_Lat != settings.Latitude) || (prev_Lon != settings.Longitude);
     bool requestSun = (!prev_ShowSun && settings.ShowSun) ||
                    (!prev_ShowMoon && settings.ShowMoon) ||
-                   (!prev_NightTheme && settings.NightTheme);
-    bool requestWeather = ((prev_TemperatureUnit != settings.TemperatureUnit) || !prev_ShowWeather) && settings.ShowWeather;
+                   (!prev_NightTheme && settings.NightTheme) ||
+                   (updateCoordinates && (settings.ShowSun || settings.ShowMoon || settings.NightTheme));
+    bool requestWeather = ((prev_TemperatureUnit != settings.TemperatureUnit) || !prev_ShowWeather || updateCoordinates) && settings.ShowWeather;
     bool requestBattery = (!prev_ShowPhoneBattery && settings.ShowPhoneBattery);
     bool unsibscribeBattery = (prev_ShowPhoneBattery && !settings.ShowPhoneBattery);
-    if (requestSun || requestWeather || requestBattery || unsibscribeBattery) {
+    if (requestSun || requestWeather || requestBattery || unsibscribeBattery || updateCoordinates) {
       DictionaryIterator *iter;
       app_message_outbox_begin(&iter);
       if (requestSun) {
@@ -558,6 +611,19 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
       }
       if (unsibscribeBattery) {
         dict_write_uint8(iter, MESSAGE_KEY_UNSUBSCRIBE_BATTERY, 1);
+      }
+      if (updateCoordinates) {
+        // Send empty string if coordinates are not set, otherwise send scaled int
+        if (strcmp(man_lat_t->value->cstring,"") == 0) {
+          dict_write_cstring(iter, MESSAGE_KEY_Latitude, "");
+        } else {
+          dict_write_int32(iter, MESSAGE_KEY_Latitude, settings.Latitude);
+        }
+        if (strcmp(man_lon_t->value->cstring,"") == 0) {
+          dict_write_cstring(iter, MESSAGE_KEY_Longitude, "");
+        } else {
+          dict_write_int32(iter, MESSAGE_KEY_Longitude, settings.Longitude);
+        }
       }
       app_message_outbox_send();
     }
