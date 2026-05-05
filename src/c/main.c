@@ -307,6 +307,43 @@ static void update_moon() {
   text_layer_set_text(s_moon_layer, moon_phase[settings.MoonPhase]);
 }
 
+int parse_coordinates(char *coor_str) {
+  char *dot = strchr(coor_str, '.');
+  int32_t whole_part = 0;
+  int32_t frac_part = 0;
+  
+  if (dot) {
+    // Null-terminate at the dot to isolate the whole number
+    *dot = '\0';
+    whole_part = atoi(coor_str);
+    
+    // Move to the character after the dot
+    char *fractional_string = dot + 1;
+    int len = strlen(fractional_string);
+    frac_part = atoi(fractional_string);
+    
+    // Scale the fractional part to 6 decimal places
+    // e.g., if ".5" it becomes 500000. If ".5074" it becomes 507400
+    for (int i = len; i < 6; i++) {
+      frac_part *= 10;
+    }
+    // If the fractional part was longer than 6, truncate it
+    for (int i = len; i > 6; i--) {
+      frac_part /= 10;
+    }
+  } else {
+    // No decimal point found
+    whole_part = atoi(coor_str);
+  }
+
+  // Combine them (handling negative coordinates like -74.00)
+  if (whole_part < 0 || coor_str[0] == '-') {
+    return (whole_part * 1000000) - frac_part;
+  } else {
+    return (whole_part * 1000000) + frac_part;
+  }
+}
+
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   // run every minute
   update_time();
@@ -481,16 +518,13 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   }
 
   // check for manual coordinates
-  // TODO: ensure value is stored as int(float * 1000000)
   Tuple *man_lat_t = dict_find(iterator, MESSAGE_KEY_Latitude);
   if (man_lat_t) {
-    float latFloat = man_lat_t->value->int32 / 1.0f;
-    settings.Latitude = (int)(latFloat * 1000000);
+    settings.Latitude = parse_coordinates(man_lat_t->value->cstring);
   }
   Tuple *man_lon_t = dict_find(iterator, MESSAGE_KEY_Longitude);
   if (man_lon_t) {
-    float lonFloat = man_lon_t->value->int32 / 1.0f;
-    settings.Longitude = (int)(lonFloat * 1000000);
+    settings.Longitude = parse_coordinates(man_lon_t->value->cstring);
   }
 
   // Check for weather data

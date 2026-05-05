@@ -141,7 +141,10 @@ module.exports = [
         "label": "Manual Location - Latitude",
         "attributes": {
           "placeholder": "eg: 40.7127 (leave blank to use GPS)",
-          "type": "number"
+          "type": "number",
+          "min": "-90",
+          "max": "90",
+          "step": ".000001"
         }
       },
       {
@@ -152,7 +155,10 @@ module.exports = [
         "description": "Leave both blank to use GPS location for weather & sun times. You can use <a href =https://www.google.com/maps>Google Maps</a> or <a href =https://www.openstreetmap.org/>OpenStreetMap</a> to find latitude & longitude.",
         "attributes": {
           "placeholder": "eg: -74.0061 (leave blank to use GPS)",
-          "type": "number"
+          "type": "number",
+          "min": "-180",
+          "max": "180",
+          "step": ".000001"
         }
       }
     ]
