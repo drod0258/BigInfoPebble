@@ -569,7 +569,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   }
 
   // Save and apply if any settings were changed
-  if (bg_color_day_t || text_color_day_t || bg_color_night_t || text_color_night_t || night_theme_t || temp_unit_t || show_weather_t || show_date_t || show_date2_t || alt_date_t || show_steps_t || show_sun_t || show_moon_t || show_phone_battery_t) {
+  if (bg_color_day_t || text_color_day_t || bg_color_night_t || text_color_night_t || night_theme_t || temp_unit_t || show_weather_t || show_date_t || show_date2_t || alt_date_t || show_steps_t || show_sun_t || show_moon_t || show_phone_battery_t || man_lat_t || man_lon_t) {
     
     // if show battery was toggled
     if (prev_ShowPhoneBattery != settings.ShowPhoneBattery) {
@@ -612,8 +612,17 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
         dict_write_uint8(iter, MESSAGE_KEY_UNSUBSCRIBE_BATTERY, 1);
       }
       if (sendCoordinates) {
-        dict_write_uint8(iter, MESSAGE_KEY_Latitude, settings.Latitude);
-        dict_write_uint8(iter, MESSAGE_KEY_Longitude, settings.Longitude);
+        // Send empty string if coordinates are not set, otherwise send scaled int
+        if (man_lat_t->value->cstring == "") {
+          dict_write_string(iter, MESSAGE_KEY_Latitude, "");
+        } else {
+          dict_write_uint8(iter, MESSAGE_KEY_Latitude, settings.Latitude);
+        }
+        if (man_lon_t->value->cstring == "") {
+          dict_write_string(iter, MESSAGE_KEY_Longitude, "");
+        } else {
+          dict_write_uint8(iter, MESSAGE_KEY_Longitude, settings.Longitude);
+        }
       }
       app_message_outbox_send();
     }
