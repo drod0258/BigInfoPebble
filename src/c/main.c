@@ -247,7 +247,7 @@ static void update_time() {
 
   static char s_time_buffer[8];
   strftime(s_time_buffer, sizeof(s_time_buffer), clock_is_24h_style() ?
-                                                    "%H:%M" : "%I:%M", tick_time);
+                                                    "%H:%M" : "%l:%M", tick_time);
   text_layer_set_text(s_time_layer, s_time_buffer);
 }
 

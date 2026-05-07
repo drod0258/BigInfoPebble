@@ -75,13 +75,13 @@
           "type": "font",
           "name": "FONT_TALLBOLD_49",
           "file": "fonts/tallbolder.ttf",
-          "characterRegex": "[:0-9]"
+          "characterRegex": "[0-9: ]"
         },
         {
           "type": "font",
           "name": "FONT_TALLBOLD_64",
           "file": "fonts/tallbolder.ttf",
-          "characterRegex": "[:0-9]",
+          "characterRegex": "[0-9: ]",
           "targetPlatforms": [
             "emery"
           ]
