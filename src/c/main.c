@@ -247,7 +247,7 @@ static void update_time() {
 
   static char s_time_buffer[8];
   strftime(s_time_buffer, sizeof(s_time_buffer), clock_is_24h_style() ?
-                                                    "%H:%M" : "%I:%M", tick_time);
+                                                    "%H:%M" : "%l:%M", tick_time);
   text_layer_set_text(s_time_layer, s_time_buffer);
 }
 
@@ -297,8 +297,24 @@ static void update_steps() {
 static void update_sun() {
   static char sunrise_buffer[6];
   static char sunset_buffer[6];
-  snprintf(sunrise_buffer, sizeof(sunrise_buffer), "%02d:%02d", (settings.SunriseTime / 100), (settings.SunriseTime % 100));
-  snprintf(sunset_buffer, sizeof(sunset_buffer), "%02d:%02d", (settings.SunsetTime / 100), (settings.SunsetTime % 100));
+  int sunriseHour = (settings.SunriseTime / 100);
+  int sunriseMinute = (settings.SunriseTime % 100);
+  int sunsetHour = (settings.SunsetTime / 100);
+  int sunsetMinute = (settings.SunsetTime % 100);
+  if (!clock_is_24h_style()) {
+    if (sunriseHour > 12) {
+      sunriseHour -= 12;
+    } else if (sunriseHour == 0) {
+      sunriseHour = 12;
+    }
+    if (sunsetHour > 12) {
+      sunsetHour -= 12;
+    } else if (sunsetHour == 0) {
+      sunsetHour = 12;
+    }
+  }
+  snprintf(sunrise_buffer, sizeof(sunrise_buffer), clock_is_24h_style() ? "%02d:%02d" : "%d:%02d", sunriseHour, sunriseMinute);
+  snprintf(sunset_buffer, sizeof(sunset_buffer), clock_is_24h_style() ? "%02d:%02d" : "%d:%02d", sunsetHour, sunsetMinute);
   text_layer_set_text(s_sunrise_layer, sunrise_buffer);
   text_layer_set_text(s_sunset_layer, sunset_buffer);
 }
