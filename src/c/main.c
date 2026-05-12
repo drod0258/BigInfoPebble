@@ -29,6 +29,7 @@ typedef struct ClaySettings {
   int Longitude;
   // storage
   bool IsDay;
+  bool ManualCoordinates;
   int SunriseTime;
   int SunsetTime;
   int MoonPhase;
@@ -91,6 +92,7 @@ static void prv_default_settings() {
   settings.BluetoothVibrate = false;
   // storage
   settings.IsDay=false;
+  settings.ManualCoordinates=false;
   settings.SunriseTime=1;
   settings.SunsetTime=2359;
   settings.MoonPhase=29;
@@ -452,6 +454,7 @@ static void bluetooth_callback(bool connected) {
 // AppMessage received handler
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
   // Save previous values to detect actual changes
+  bool prev_ShowSteps = settings.ShowSteps;
   bool prev_ShowSun = settings.ShowSun;
   bool prev_ShowMoon = settings.ShowMoon;
   bool prev_NightTheme = settings.NightTheme;
@@ -459,8 +462,8 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   bool prev_TemperatureUnit = settings.TemperatureUnit;
   bool prev_ShowPhoneBattery = settings.ShowPhoneBattery;
   bool prev_AltDate = settings.AltDate;
-  bool prev_Lat = settings.Latitude;
-  bool prev_Lon = settings.Longitude;
+  int prev_Lat = settings.Latitude;
+  int prev_Lon = settings.Longitude;
 
   // Check for Clay settings data
   Tuple *bg_color_day_t = dict_find(iterator, MESSAGE_KEY_BackgroundColorDay);
@@ -510,6 +513,8 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   Tuple *show_steps_t = dict_find(iterator, MESSAGE_KEY_ShowSteps);
   if (show_steps_t) {
     settings.ShowSteps = show_steps_t->value->int32 == 1;
+  }
+  if (!prev_ShowSteps && settings.ShowSteps) {
     update_steps();
   }
   Tuple *show_sun_t = dict_find(iterator, MESSAGE_KEY_ShowSun);
@@ -542,20 +547,26 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   if (man_lon_t) {
     settings.Longitude = parse_coordinates(man_lon_t->value->cstring);
   }
+  if (settings.Latitude && settings.Longitude && (strcmp(man_lat_t->value->cstring,"") != 0) && (strcmp(man_lon_t->value->cstring,"") != 0)) {
+    settings.ManualCoordinates = true;
+  } else {
+    settings.ManualCoordinates = false;
+  }
 
   // Check for weather data
   Tuple *temp_tuple = dict_find(iterator, MESSAGE_KEY_TEMPERATURE);
-  Tuple *conditions_tuple = dict_find(iterator, MESSAGE_KEY_CONDITIONS);
-
-  if (temp_tuple && conditions_tuple) {
-    settings.WeatherTemp = (int)temp_tuple->value->int32;
-    // Convert to Fahrenheit if setting is enabled
+  if (temp_tuple) {
     if (settings.TemperatureUnit) {
-      settings.WeatherTemp = (settings.WeatherTemp * 9 / 5) + 32;
+      settings.WeatherTemp = ((int)temp_tuple->value->int32 * 9 / 5) + 32;
+    } else {
+      settings.WeatherTemp = (int)temp_tuple->value->int32;
     }
+  }
+  Tuple *conditions_tuple = dict_find(iterator, MESSAGE_KEY_CONDITIONS);
+  if (conditions_tuple) {
     settings.WeatherIcon = (int)conditions_tuple->value->int32;
   }
-  if (show_weather_t || (temp_tuple && conditions_tuple)) {
+  if (temp_tuple || conditions_tuple) {
     update_weather();
   }
 
@@ -565,15 +576,11 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   if (sunrise_tuple && sunset_tuple) {
     settings.SunriseTime = (int)sunrise_tuple->value->int32;
     settings.SunsetTime = (int)sunset_tuple->value->int32;
-  }
-  if (show_sun_t || (sunrise_tuple && sunset_tuple)) {
     update_sun();
   }
   Tuple *moon_tuple = dict_find(iterator, MESSAGE_KEY_MOONPHASE);
   if (moon_tuple) {
     settings.MoonPhase = (int)moon_tuple->value->int32;
-  }
-  if (show_moon_t || moon_tuple) {
     update_moon();
   }
 
@@ -629,16 +636,13 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
         dict_write_uint8(iter, MESSAGE_KEY_UNSUBSCRIBE_BATTERY, 1);
       }
       if (updateCoordinates) {
-        // Send empty string if coordinates are not set, otherwise send scaled int
-        if (strcmp(man_lat_t->value->cstring,"") == 0) {
-          dict_write_cstring(iter, MESSAGE_KEY_Latitude, "");
-        } else {
+        // Send scaled int if coordinates are set, otherwise send empty string
+        if (settings.ManualCoordinates) {
           dict_write_int32(iter, MESSAGE_KEY_Latitude, settings.Latitude);
-        }
-        if (strcmp(man_lon_t->value->cstring,"") == 0) {
-          dict_write_cstring(iter, MESSAGE_KEY_Longitude, "");
-        } else {
           dict_write_int32(iter, MESSAGE_KEY_Longitude, settings.Longitude);
+        } else {
+          dict_write_cstring(iter, MESSAGE_KEY_Latitude, "");
+          dict_write_cstring(iter, MESSAGE_KEY_Longitude, "");
         }
       }
       app_message_outbox_send();
