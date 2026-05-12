@@ -260,7 +260,8 @@ function weatherInfo(pos) {
       console.log('Temperature is ' + temperature);
 
       // Conditions from weather code
-      var conditions = weatherCodeToCondition(json.current.weather_code);
+      var conditions = 15 // default to "unknown" weather condition
+      conditions = weatherCodeToCondition(json.current.weather_code);
       console.log('Conditions are ' + conditions);
 
       // change condition based on day or night
@@ -299,6 +300,22 @@ function weatherInfo(pos) {
   );
 }
 
+function weatherError(err) {
+  console.log('Error requesting location!');
+  var dictionary = {
+    "CONDITIONS": 15 // send "unknown" weather code
+  };
+  // Send to Pebble
+  Pebble.sendAppMessage(dictionary,
+    function(e) {
+      console.log('Weather error sent to Pebble');
+    },
+    function(e) {
+      console.log('Error sending weather error to Pebble!');
+    }
+  );
+}
+
 function locationError(err) {
   console.log('Error requesting location!');
 }
@@ -323,7 +340,7 @@ function getWeatherInfo() {
     console.log('Using GPS for weather info');
     navigator.geolocation.getCurrentPosition(
       weatherInfo,
-      locationError,
+      weatherError,
       { timeout: 15000, maximumAge: 60000 }
     );
   }
