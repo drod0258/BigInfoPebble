@@ -748,7 +748,8 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 
   // Save and apply if any settings were changed
   if (
-    bg_color_day_t || bg_color_night_t || night_theme_t || bl_color_day_t || bl_color_night_t ||
+    bg_color_day_t || bg_color_night_t || night_theme_t || 
+    text_color_day_t || text_color_night_t || bl_color_day_t || bl_color_night_t ||
     time_color_day_t || date_color_day_t || weather_color_day_t || health_color_day_t || 
     sun_color_day_t || moon_color_day_t || battery_color_day_t || 
     time_color_night_t || date_color_night_t || weather_color_night_t || health_color_night_t || 
