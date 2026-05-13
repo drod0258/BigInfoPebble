@@ -15,6 +15,7 @@ typedef struct ClaySettings {
   GColor MoonColor;
   GColor BatteryColor;
   GColor BackgroundColorDay;
+  GColor TextColorDay;
   GColor TimeColorDay;
   GColor DateColorDay;
   GColor WeatherColorDay;
@@ -23,6 +24,7 @@ typedef struct ClaySettings {
   GColor MoonColorDay;
   GColor BatteryColorDay;
   GColor BackgroundColorNight;
+  GColor TextColorNight;
   GColor TimeColorNight;
   GColor DateColorNight;
   GColor WeatherColorNight;
@@ -91,6 +93,7 @@ static Layer *s_window_layer;
 static void prv_default_settings() {
   // user settings
   settings.BackgroundColorDay = GColorWhite;
+  settings.TextColorDay = GColorBlack;
   settings.TimeColorDay = GColorBlack;
   settings.DateColorDay = GColorBlack;
   settings.WeatherColorDay = GColorBlack;
@@ -99,6 +102,7 @@ static void prv_default_settings() {
   settings.MoonColorDay = GColorBlack;
   settings.BatteryColorDay = GColorBlack;
   settings.BackgroundColorNight = GColorBlack;
+  settings.TextColorNight = GColorWhite;
   settings.TimeColorNight = GColorWhite;
   settings.DateColorNight = GColorWhite;
   settings.WeatherColorNight = GColorWhite;
@@ -223,23 +227,23 @@ static void prv_load_settings() {
 static void prv_update_display() {
   if (settings.NightTheme && !settings.IsDay) {
     settings.BackgroundColor = settings.BackgroundColorNight;
-    settings.TimeColor = settings.TimeColorNight;
-    settings.DateColor = settings.DateColorNight;
-    settings.WeatherColor = settings.WeatherColorNight;
-    settings.HealthColor = settings.HealthColorNight;
-    settings.SunColor = settings.SunColorNight;
-    settings.MoonColor = settings.MoonColorNight;
-    settings.BatteryColor = settings.BatteryColorNight;
+    settings.TimeColor = PBL_IF_COLOR_ELSE(settings.TimeColorNight, settings.TextColorNight);
+    settings.DateColor = PBL_IF_COLOR_ELSE(settings.DateColorNight, settings.TextColorNight);
+    settings.WeatherColor = PBL_IF_COLOR_ELSE(settings.WeatherColorNight, settings.TextColorNight);
+    settings.HealthColor = PBL_IF_COLOR_ELSE(settings.HealthColorNight, settings.TextColorNight);
+    settings.SunColor = PBL_IF_COLOR_ELSE(settings.SunColorNight, settings.TextColorNight);
+    settings.MoonColor = PBL_IF_COLOR_ELSE(settings.MoonColorNight, settings.TextColorNight);
+    settings.BatteryColor = PBL_IF_COLOR_ELSE(settings.BatteryColorNight, settings.TextColorNight);
   }
   else {
     settings.BackgroundColor = settings.BackgroundColorDay;
-    settings.TimeColor = settings.TimeColorDay;
-    settings.DateColor = settings.DateColorDay;
-    settings.WeatherColor = settings.WeatherColorDay;
-    settings.HealthColor = settings.HealthColorDay;
-    settings.SunColor = settings.SunColorDay;
-    settings.MoonColor = settings.MoonColorDay;
-    settings.BatteryColor = settings.BatteryColorDay;
+    settings.TimeColor = PBL_IF_COLOR_ELSE(settings.TimeColorDay, settings.TextColorDay);
+    settings.DateColor = PBL_IF_COLOR_ELSE(settings.DateColorDay, settings.TextColorDay);
+    settings.WeatherColor = PBL_IF_COLOR_ELSE(settings.WeatherColorDay, settings.TextColorDay);
+    settings.HealthColor = PBL_IF_COLOR_ELSE(settings.HealthColorDay, settings.TextColorDay);
+    settings.SunColor = PBL_IF_COLOR_ELSE(settings.SunColorDay, settings.TextColorDay);
+    settings.MoonColor = PBL_IF_COLOR_ELSE(settings.MoonColorDay, settings.TextColorDay);
+    settings.BatteryColor = PBL_IF_COLOR_ELSE(settings.BatteryColorDay, settings.TextColorDay);
   }
 
   // Set background color
@@ -539,6 +543,10 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   if (bg_color_day_t) {
     settings.BackgroundColorDay = GColorFromHEX(bg_color_day_t->value->int32);
   }
+  Tuple *text_color_day_t = dict_find(iterator, MESSAGE_KEY_TextColorDay);
+  if (text_color_day_t) {
+    settings.TextColorDay = GColorFromHEX(text_color_day_t->value->int32);
+  }
   Tuple *time_color_day_t = dict_find(iterator, MESSAGE_KEY_TimeColorDay);
   if (time_color_day_t) {
     settings.TimeColorDay = GColorFromHEX(time_color_day_t->value->int32);
@@ -570,6 +578,10 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   Tuple *bg_color_night_t = dict_find(iterator, MESSAGE_KEY_BackgroundColorNight);
   if (bg_color_night_t) {
     settings.BackgroundColorNight = GColorFromHEX(bg_color_night_t->value->int32);
+  }
+  Tuple *text_color_night_t = dict_find(iterator, MESSAGE_KEY_TextColorNight);
+  if (text_color_night_t) {
+    settings.TextColorNight = GColorFromHEX(text_color_night_t->value->int32);
   }
   Tuple *time_color_night_t = dict_find(iterator, MESSAGE_KEY_TimeColorNight);
   if (time_color_night_t) {

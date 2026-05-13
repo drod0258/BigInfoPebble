@@ -27,45 +27,59 @@ module.exports = [
       },
       {
         "type": "color",
+        "messageKey": "TextColorDay",
+        "label": "Text Color",
+        "defaultValue": "0x000000",
+        "capabilities": ["NOT_COLOR"]
+      },
+      {
+        "type": "color",
         "messageKey": "TimeColorDay",
         "label": "Time Color",
-        "defaultValue": "0x000000"
+        "defaultValue": "0x000000",
+        "capabilities": ["COLOR"]
       },
       {
         "type": "color",
         "messageKey": "DateColorDay",
         "label": "Date Color",
         "defaultValue": "0x000000",
+        "capabilities": ["COLOR"]
       },
       {
         "type": "color",
         "messageKey": "WeatherColorDay",
         "label": "Weather Color",
         "defaultValue": "0x000000",
+        "capabilities": ["COLOR"]
       },
       {
         "type": "color",
         "messageKey": "HealthColorDay",
         "label": "Health Color",
         "defaultValue": "0x000000",
+        "capabilities": ["COLOR"]
       },
       {
         "type": "color",
         "messageKey": "SunColorDay",
         "label": "Sun Time Color",
         "defaultValue": "0x000000",
+        "capabilities": ["COLOR"]
       },
       {
         "type": "color",
         "messageKey": "MoonColorDay",
         "label": "Moon Color",
         "defaultValue": "0x000000",
+        "capabilities": ["COLOR"]
       },
       {
         "type": "color",
         "messageKey": "BatteryColorDay",
         "label": "Battery Color",
         "defaultValue": "0x000000",
+        "capabilities": ["COLOR"]
       }
     ]
   },
@@ -91,45 +105,59 @@ module.exports = [
       },
       {
         "type": "color",
+        "messageKey": "TextColorNight",
+        "label": "Night Text Color",
+        "defaultValue": "0xFFFFFF",
+        "capabilities": ["NOT_COLOR"]
+      },
+      {
+        "type": "color",
         "messageKey": "TimeColorNight",
         "label": "Night Time Color",
-        "defaultValue": "0xFFFFFF"
+        "defaultValue": "0xFFFFFF",
+        "capabilities": ["COLOR"]
       },
       {
         "type": "color",
         "messageKey": "DateColorNight",
         "label": "Night Date Color",
         "defaultValue": "0xFFFFFF",
+        "capabilities": ["COLOR"]
       },
       {
         "type": "color",
         "messageKey": "WeatherColorNight",
         "label": "Night Weather Color",
         "defaultValue": "0xFFFFFF",
+        "capabilities": ["COLOR"]
       },
       {
         "type": "color",
         "messageKey": "HealthColorNight",
         "label": "Night Health Color",
         "defaultValue": "0xFFFFFF",
+        "capabilities": ["COLOR"]
       },
       {
         "type": "color",
         "messageKey": "SunColorNight",
         "label": "Night Sun Time Color",
         "defaultValue": "0xFFFFFF",
+        "capabilities": ["COLOR"]
       },
       {
         "type": "color",
         "messageKey": "MoonColorNight",
         "label": "Night Moon Color",
         "defaultValue": "0xFFFFFF",
+        "capabilities": ["COLOR"]
       },
       {
         "type": "color",
         "messageKey": "BatteryColorNight",
         "label": "Night Battery Color",
         "defaultValue": "0xFFFFFF",
+        "capabilities": ["COLOR"]
       }
     ]
   },
@@ -150,8 +178,9 @@ module.exports = [
         "type": "toggle",
         "messageKey": "ShowDate2",
         "label": "Show additional Date",
-        "description": "Day/Year for larger screens (Time 2)",
-        "defaultValue": false
+        "description": "`YYYY` or `Day`",
+        "defaultValue": false,
+        "capabilities": ["DISPLAY_200x228"]
       },
       {
         "type": "toggle",
@@ -164,6 +193,7 @@ module.exports = [
   },
   {
     "type": "section",
+    "capabilities": ["HEALTH"],
     "items": [
       {
         "type": "heading",
