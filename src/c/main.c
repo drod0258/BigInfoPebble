@@ -8,10 +8,31 @@ typedef struct ClaySettings {
   // user settings
   GColor BackgroundColor;
   GColor TextColor;
+  GColor TimeColor;
+  GColor DateColor;
+  GColor WeatherColor;
+  GColor HealthColor;
+  GColor SunColor;
+  GColor MoonColor;
+  GColor BatteryColor;
   GColor BackgroundColorDay;
   GColor TextColorDay;
+  GColor TimeColorDay;
+  GColor DateColorDay;
+  GColor WeatherColorDay;
+  GColor HealthColorDay;
+  GColor SunColorDay;
+  GColor MoonColorDay;
+  GColor BatteryColorDay;
   GColor BackgroundColorNight;
   GColor TextColorNight;
+  GColor TimeColorNight;
+  GColor DateColorNight;
+  GColor WeatherColorNight;
+  GColor HealthColorNight;
+  GColor SunColorNight;
+  GColor MoonColorNight;
+  GColor BatteryColorNight;
   bool NightTheme;
   bool ShowWeather;
   bool TemperatureUnit;
@@ -74,10 +95,31 @@ static void prv_default_settings() {
   // user settings
   settings.BackgroundColorDay = GColorWhite;
   settings.TextColorDay = GColorBlack;
+  settings.TimeColorDay = GColorBlack;
+  settings.DateColorDay = GColorBlack;
+  settings.WeatherColorDay = GColorBlack;
+  settings.HealthColorDay = GColorBlack;
+  settings.SunColorDay = GColorBlack;
+  settings.MoonColorDay = GColorBlack;
+  settings.BatteryColorDay = GColorBlack;
   settings.BackgroundColorNight = GColorBlack;
   settings.TextColorNight = GColorWhite;
+  settings.TimeColorNight = GColorWhite;
+  settings.DateColorNight = GColorWhite;
+  settings.WeatherColorNight = GColorWhite;
+  settings.HealthColorNight = GColorWhite;
+  settings.SunColorNight = GColorWhite;
+  settings.MoonColorNight = GColorWhite;
+  settings.BatteryColorNight = GColorWhite;
   settings.BackgroundColor = settings.BackgroundColorDay;
   settings.TextColor = settings.TextColorDay;
+  settings.TimeColor = settings.TimeColorDay;
+  settings.DateColor = settings.DateColorDay;
+  settings.WeatherColor = settings.WeatherColorDay;
+  settings.HealthColor = settings.HealthColorDay;
+  settings.SunColor = settings.SunColorDay;
+  settings.MoonColor = settings.MoonColorDay;
+  settings.BatteryColor = settings.BatteryColorDay;
   settings.NightTheme = false;
   settings.ShowDate = false;
   settings.ShowDate2 = false;
@@ -185,34 +227,42 @@ static void prv_load_settings() {
 
 // Apply settings to UI elements
 static void prv_update_display() {
-  if (settings.NightTheme) {
-    if (settings.IsDay) {
-      settings.BackgroundColor = settings.BackgroundColorDay;
-      settings.TextColor = settings.TextColorDay;
-    }
-    else {
-      settings.BackgroundColor = settings.BackgroundColorNight;
-      settings.TextColor = settings.TextColorNight;
-    }
+  if (settings.NightTheme && !settings.IsDay) {
+    settings.BackgroundColor = settings.BackgroundColorNight;
+    settings.TextColor = settings.TextColorNight;
+    settings.TimeColor = settings.TimeColorNight;
+    settings.DateColor = settings.DateColorNight;
+    settings.WeatherColor = settings.WeatherColorNight;
+    settings.HealthColor = settings.HealthColorNight;
+    settings.SunColor = settings.SunColorNight;
+    settings.MoonColor = settings.MoonColorNight;
+    settings.BatteryColor = settings.BatteryColorNight;
   }
   else {
     settings.BackgroundColor = settings.BackgroundColorDay;
     settings.TextColor = settings.TextColorDay;
+    settings.TimeColor = settings.TimeColorDay;
+    settings.DateColor = settings.DateColorDay;
+    settings.WeatherColor = settings.WeatherColorDay;
+    settings.HealthColor = settings.HealthColorDay;
+    settings.SunColor = settings.SunColorDay;
+    settings.MoonColor = settings.MoonColorDay;
+    settings.BatteryColor = settings.BatteryColorDay;
   }
 
   // Set background color
   window_set_background_color(s_main_window, settings.BackgroundColor);
 
   // Set text colors
-  text_layer_set_text_color(s_time_layer, settings.TextColor);
-  text_layer_set_text_color(s_date_layer, settings.TextColor);
-  text_layer_set_text_color(s_date2_layer, settings.TextColor);
-  text_layer_set_text_color(s_health_layer, settings.TextColor);
-  text_layer_set_text_color(s_weather_layer, settings.TextColor);
-  text_layer_set_text_color(s_weather_icon_layer, settings.TextColor);
-  text_layer_set_text_color(s_sunrise_layer, settings.TextColor);
-  text_layer_set_text_color(s_sunset_layer, settings.TextColor);
-  text_layer_set_text_color(s_moon_layer, settings.TextColor);
+  text_layer_set_text_color(s_time_layer, settings.TimeColor);
+  text_layer_set_text_color(s_date_layer, settings.DateColor);
+  text_layer_set_text_color(s_date2_layer, settings.DateColor);
+  text_layer_set_text_color(s_health_layer, settings.HealthColor);
+  text_layer_set_text_color(s_weather_layer, settings.WeatherColor);
+  text_layer_set_text_color(s_weather_icon_layer, settings.WeatherColor);
+  text_layer_set_text_color(s_sunrise_layer, settings.SunColor);
+  text_layer_set_text_color(s_sunset_layer, settings.SunColor);
+  text_layer_set_text_color(s_moon_layer, settings.MoonColor);
 
   // Show/hide based on setting
   layer_set_hidden(text_layer_get_layer(s_date_layer), !settings.ShowDate);
@@ -439,17 +489,17 @@ static void battery_update_proc(Layer *layer, GContext *ctx, int battery_level) 
   int bar_width = ((battery_level * (bounds.size.w - 4)) / 100);
 
   // Draw the border using the text color
-  graphics_context_set_stroke_color(ctx, settings.TextColor);
+  graphics_context_set_stroke_color(ctx, settings.BatteryColor);
   graphics_draw_round_rect(ctx, bounds, 2);
 
   // Choose color based on battery level
   GColor bar_color;
   if (battery_level <= 20) {
-    bar_color = PBL_IF_COLOR_ELSE(GColorRed, settings.TextColor);
+    bar_color = PBL_IF_COLOR_ELSE(GColorRed, settings.BatteryColor);
   } else if (battery_level <= 40) {
-    bar_color = PBL_IF_COLOR_ELSE(GColorChromeYellow, settings.TextColor);
+    bar_color = PBL_IF_COLOR_ELSE(GColorChromeYellow, settings.BatteryColor);
   } else {
-    bar_color = PBL_IF_COLOR_ELSE(GColorGreen, settings.TextColor);
+    bar_color = PBL_IF_COLOR_ELSE(GColorGreen, settings.BatteryColor);
   }
 
   // Draw the filled bar inside the border
@@ -500,6 +550,34 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   if (text_color_day_t) {
     settings.TextColorDay = GColorFromHEX(text_color_day_t->value->int32);
   }
+  Tuple *time_color_day_t = dict_find(iterator, MESSAGE_KEY_TimeColorDay);
+  if (time_color_day_t) {
+    settings.TimeColorDay = GColorFromHEX(time_color_day_t->value->int32);
+  }
+  Tuple *date_color_day_t = dict_find(iterator, MESSAGE_KEY_DateColorDay);
+  if (date_color_day_t) {
+    settings.DateColorDay = GColorFromHEX(date_color_day_t->value->int32);
+  }
+  Tuple *weather_color_day_t = dict_find(iterator, MESSAGE_KEY_WeatherColorDay);
+  if (weather_color_day_t) {
+    settings.WeatherColorDay = GColorFromHEX(weather_color_day_t->value->int32);
+  }
+  Tuple *health_color_day_t = dict_find(iterator, MESSAGE_KEY_HealthColorDay);
+  if (health_color_day_t) {
+    settings.HealthColorDay = GColorFromHEX(health_color_day_t->value->int32);
+  }
+  Tuple *sun_color_day_t = dict_find(iterator, MESSAGE_KEY_SunColorDay);
+  if (sun_color_day_t) {
+    settings.SunColorDay = GColorFromHEX(sun_color_day_t->value->int32);
+  }
+  Tuple *moon_color_day_t = dict_find(iterator, MESSAGE_KEY_MoonColorDay);
+  if (moon_color_day_t) {
+    settings.MoonColorDay = GColorFromHEX(moon_color_day_t->value->int32);
+  }
+  Tuple *battery_color_day_t = dict_find(iterator, MESSAGE_KEY_BatteryColorDay);
+  if (battery_color_day_t) {
+    settings.BatteryColorDay = GColorFromHEX(battery_color_day_t->value->int32);
+  }
   Tuple *bg_color_night_t = dict_find(iterator, MESSAGE_KEY_BackgroundColorNight);
   if (bg_color_night_t) {
     settings.BackgroundColorNight = GColorFromHEX(bg_color_night_t->value->int32);
@@ -507,6 +585,34 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   Tuple *text_color_night_t = dict_find(iterator, MESSAGE_KEY_TextColorNight);
   if (text_color_night_t) {
     settings.TextColorNight = GColorFromHEX(text_color_night_t->value->int32);
+  }
+  Tuple *time_color_night_t = dict_find(iterator, MESSAGE_KEY_TimeColorNight);
+  if (time_color_night_t) {
+    settings.TimeColorNight = GColorFromHEX(time_color_night_t->value->int32);
+  }
+  Tuple *date_color_night_t = dict_find(iterator, MESSAGE_KEY_DateColorNight);
+  if (date_color_night_t) {
+    settings.DateColorNight = GColorFromHEX(date_color_night_t->value->int32);
+  }
+  Tuple *weather_color_night_t = dict_find(iterator, MESSAGE_KEY_WeatherColorNight);
+  if (weather_color_night_t) {
+    settings.WeatherColorNight = GColorFromHEX(weather_color_night_t->value->int32);
+  }
+  Tuple *health_color_night_t = dict_find(iterator, MESSAGE_KEY_HealthColorNight);
+  if (health_color_night_t) {
+    settings.HealthColorNight = GColorFromHEX(health_color_night_t->value->int32);
+  }
+  Tuple *sun_color_night_t = dict_find(iterator, MESSAGE_KEY_SunColorNight);
+  if (sun_color_night_t) {
+    settings.SunColorNight = GColorFromHEX(sun_color_night_t->value->int32);
+  }
+  Tuple *moon_color_night_t = dict_find(iterator, MESSAGE_KEY_MoonColorNight);
+  if (moon_color_night_t) {
+    settings.MoonColorNight = GColorFromHEX(moon_color_night_t->value->int32);
+  }
+  Tuple *battery_color_night_t = dict_find(iterator, MESSAGE_KEY_BatteryColorNight);
+  if (battery_color_night_t) {
+    settings.BatteryColorNight = GColorFromHEX(battery_color_night_t->value->int32);
   }
   Tuple *night_theme_t = dict_find(iterator, MESSAGE_KEY_NightTheme);
   if (night_theme_t) {
@@ -625,7 +731,13 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   }
 
   // Save and apply if any settings were changed
-  if (bg_color_day_t || text_color_day_t || bg_color_night_t || text_color_night_t || night_theme_t || temp_unit_t || show_weather_t || show_date_t || show_date2_t || alt_date_t || show_steps_t || show_hr_t || show_sun_t || show_moon_t || show_phone_battery_t || man_lat_t || man_lon_t) {
+  if (
+    bg_color_day_t || text_color_day_t || bg_color_night_t || text_color_night_t || night_theme_t || 
+    time_color_day_t || date_color_day_t || weather_color_day_t || health_color_day_t || sun_color_day_t || moon_color_day_t || battery_color_day_t || 
+    time_color_night_t || date_color_night_t || weather_color_night_t || health_color_night_t || sun_color_night_t || moon_color_night_t || battery_color_night_t || 
+    show_date_t || show_date2_t || alt_date_t || show_steps_t || show_hr_t || 
+    show_weather_t || temp_unit_t || weahter_interval_t || show_sun_t || show_moon_t || man_lat_t || man_lon_t || 
+    show_phone_battery_t || periodic_vibrate_t || disconnect_alert_t) {
     
     // if show battery was toggled
     if (prev_ShowPhoneBattery != settings.ShowPhoneBattery) {
@@ -827,7 +939,7 @@ static void main_window_load(Window *window) {
   s_time_layer = text_layer_create(
       GRect(0, time_y, bounds.size.w, time_height));
   text_layer_set_background_color(s_time_layer, GColorClear);
-  text_layer_set_text_color(s_time_layer, settings.TextColor);
+  text_layer_set_text_color(s_time_layer, settings.TimeColor);
   text_layer_set_font(s_time_layer, s_time_font);
   text_layer_set_text_alignment(s_time_layer, GTextAlignmentCenter);
 
@@ -835,14 +947,14 @@ static void main_window_load(Window *window) {
   s_date_layer = text_layer_create(
       GRect(0, date_y, bounds.size.w, (info_height + 4)));
   text_layer_set_background_color(s_date_layer, GColorClear);
-  text_layer_set_text_color(s_date_layer, settings.TextColor);
+  text_layer_set_text_color(s_date_layer, settings.DateColor);
   text_layer_set_font(s_date_layer, s_info_font);
   text_layer_set_text_alignment(s_date_layer, GTextAlignmentCenter);
 
   s_date2_layer = text_layer_create(
       GRect(0, date2_y, bounds.size.w, (info_height + 4)));
   text_layer_set_background_color(s_date2_layer, GColorClear);
-  text_layer_set_text_color(s_date2_layer, settings.TextColor);
+  text_layer_set_text_color(s_date2_layer, settings.DateColor);
   text_layer_set_font(s_date2_layer, s_info_font);
   text_layer_set_text_alignment(s_date2_layer, GTextAlignmentCenter);
 
@@ -875,7 +987,7 @@ static void main_window_load(Window *window) {
   s_weather_layer = text_layer_create(
       GRect(weather_x, weather_y, weather_width, (info_height + 4)));
   text_layer_set_background_color(s_weather_layer, GColorClear);
-  text_layer_set_text_color(s_weather_layer, settings.TextColor);
+  text_layer_set_text_color(s_weather_layer, settings.WeatherColor);
   text_layer_set_font(s_weather_layer, s_info_font);
   text_layer_set_text_alignment(s_weather_layer, GTextAlignmentRight);
 
@@ -886,7 +998,7 @@ static void main_window_load(Window *window) {
   s_weather_icon_layer = text_layer_create(
       GRect(weather_icon_x, weather_icon_y, weather_icon_width, (info_height + 4)));
   text_layer_set_background_color(s_weather_icon_layer, GColorClear);
-  text_layer_set_text_color(s_weather_icon_layer, settings.TextColor);
+  text_layer_set_text_color(s_weather_icon_layer, settings.WeatherColor);
   text_layer_set_font(s_weather_icon_layer, s_weather_font);
   text_layer_set_text_alignment(s_weather_icon_layer, GTextAlignmentCenter);
 
@@ -900,7 +1012,7 @@ static void main_window_load(Window *window) {
   s_health_layer = text_layer_create(
       GRect(health_x, health_y, health_width, (info_height + 4)));
   text_layer_set_background_color(s_health_layer, GColorClear);
-  text_layer_set_text_color(s_health_layer, settings.TextColor);
+  text_layer_set_text_color(s_health_layer, settings.HealthColor);
   text_layer_set_font(s_health_layer, s_info_font);
   text_layer_set_text_alignment(s_health_layer, GTextAlignmentLeft);
 
@@ -909,13 +1021,13 @@ static void main_window_load(Window *window) {
   s_sunrise_layer = text_layer_create(
       GRect(0, sun_y, ((bounds.size.w / 5) * 2), (info_height + 4)));
   text_layer_set_background_color(s_sunrise_layer, GColorClear);
-  text_layer_set_text_color(s_sunrise_layer, settings.TextColor);
+  text_layer_set_text_color(s_sunrise_layer, settings.SunColor);
   text_layer_set_font(s_sunrise_layer, s_info_font);
   text_layer_set_text_alignment(s_sunrise_layer, GTextAlignmentRight);
   s_sunset_layer = text_layer_create(
       GRect(((bounds.size.w / 5) * 3), sun_y, ((bounds.size.w / 5) * 2), (info_height + 4)));
   text_layer_set_background_color(s_sunset_layer, GColorClear);
-  text_layer_set_text_color(s_sunset_layer, settings.TextColor);
+  text_layer_set_text_color(s_sunset_layer, settings.SunColor);
   text_layer_set_font(s_sunset_layer, s_info_font);
   text_layer_set_text_alignment(s_sunset_layer, GTextAlignmentLeft);
 
@@ -925,7 +1037,7 @@ static void main_window_load(Window *window) {
   s_moon_layer = text_layer_create(
       GRect(((bounds.size.w / 5) * 2), moon_y, ((bounds.size.w / 5) * 1), (info_height + 4)));
   text_layer_set_background_color(s_moon_layer, GColorClear);
-  text_layer_set_text_color(s_moon_layer, settings.TextColor);
+  text_layer_set_text_color(s_moon_layer, settings.MoonColor);
   text_layer_set_font(s_moon_layer, s_weather_font);
   text_layer_set_text_alignment(s_moon_layer, GTextAlignmentCenter);
 
