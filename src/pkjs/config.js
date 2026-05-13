@@ -20,6 +20,15 @@ module.exports = [
       },
       {
         "type": "color",
+        "messageKey": "BacklightColorDay",
+        "label": "Backglight Color",
+        "defaultValue": "0xFFEFDF",
+        "sunlight": false,
+        "layout": "COLOR",
+        "capabilities": ["PLATFORM_EMERY"]
+      },
+      {
+        "type": "color",
         "messageKey": "BackgroundColorDay",
         "label": "Background Color",
         "defaultValue": "0xFFFFFF",
@@ -95,6 +104,15 @@ module.exports = [
         "messageKey": "NightTheme",
         "label": "Enable Night Theme After Sunset",
         "defaultValue": false
+      },
+      {
+        "type": "color",
+        "messageKey": "BacklightColorNight",
+        "label": "Night Backglight Color",
+        "defaultValue": "0xFFAF7F",
+        "sunlight": false,
+        "layout": "COLOR",
+        "capabilities": ["PLATFORM_EMERY"]
       },
       {
         "type": "color",
