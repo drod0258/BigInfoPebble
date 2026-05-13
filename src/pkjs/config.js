@@ -27,30 +27,109 @@ module.exports = [
       },
       {
         "type": "color",
-        "messageKey": "TextColorDay",
-        "label": "Text Color",
+        "messageKey": "TimeColorDay",
+        "label": "Time Color",
+        "defaultValue": "0x000000"
+      },
+      {
+        "type": "color",
+        "messageKey": "DateColorDay",
+        "label": "Date Color",
         "defaultValue": "0x000000",
-        "allowGray": true
+      },
+      {
+        "type": "color",
+        "messageKey": "WeatherColorDay",
+        "label": "Weather Color",
+        "defaultValue": "0x000000",
+      },
+      {
+        "type": "color",
+        "messageKey": "HealthColorDay",
+        "label": "Health Color",
+        "defaultValue": "0x000000",
+      },
+      {
+        "type": "color",
+        "messageKey": "SunColorDay",
+        "label": "Sun Time Color",
+        "defaultValue": "0x000000",
+      },
+      {
+        "type": "color",
+        "messageKey": "MoonColorDay",
+        "label": "Moon Color",
+        "defaultValue": "0x000000",
+      },
+      {
+        "type": "color",
+        "messageKey": "BatteryColorDay",
+        "label": "Battery Color",
+        "defaultValue": "0x000000",
+      }
+    ]
+  },
+  {
+    "type": "section",
+    "items": [
+      {
+        "type": "heading",
+        "defaultValue": "Night Theme"
       },
       {
         "type": "toggle",
         "messageKey": "NightTheme",
-        "label": "Alternate Nighttime Colors",
+        "label": "Enable Night Theme After Sunset",
         "defaultValue": false
       },
       {
         "type": "color",
         "messageKey": "BackgroundColorNight",
-        "label": "Nighttime Background Color",
+        "label": "Night Background Color",
         "defaultValue": "0x000000",
         "allowGray": true
       },
       {
         "type": "color",
-        "messageKey": "TextColorNight",
-        "label": "Nighttime Text Color",
+        "messageKey": "TimeColorNight",
+        "label": "Night Time Color",
+        "defaultValue": "0xFFFFFF"
+      },
+      {
+        "type": "color",
+        "messageKey": "DateColorNight",
+        "label": "Night Date Color",
         "defaultValue": "0xFFFFFF",
-        "allowGray": true
+      },
+      {
+        "type": "color",
+        "messageKey": "WeatherColorNight",
+        "label": "Night Weather Color",
+        "defaultValue": "0xFFFFFF",
+      },
+      {
+        "type": "color",
+        "messageKey": "HealthColorNight",
+        "label": "Night Health Color",
+        "defaultValue": "0xFFFFFF",
+      },
+      {
+        "type": "color",
+        "messageKey": "SunColorNight",
+        "label": "Night Sun Time Color",
+        "defaultValue": "0xFFFFFF",
+      },
+      {
+        "type": "color",
+        "messageKey": "MoonColorNight",
+        "label": "Night Moon Color",
+        "defaultValue": "0xFFFFFF",
+      },
+      {
+        "type": "color",
+        "messageKey": "BatteryColorNight",
+        "label": "Night Battery Color",
+        "defaultValue": "0xFFFFFF",
       }
     ]
   },
