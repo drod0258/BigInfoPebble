@@ -303,12 +303,19 @@ static void update_health() {
       } else {
         snprintf(s_space_buffer, sizeof(s_space_buffer), "%s", "   ");
       }
+    } else {
+      snprintf(s_space_buffer, sizeof(s_space_buffer), "%s", "");
     }
+  } else {
+    snprintf(s_steps_buffer, sizeof(s_steps_buffer), "%s", "");
+    snprintf(s_space_buffer, sizeof(s_space_buffer), "%s", "");
   }
   // only show HR on small screens if steps are not shown
   if (settings.ShowHR && (!settings.ShowSteps || PBL_DISPLAY_HEIGHT >= 228)) {
     int hr = (int)health_service_peek_current_value(HealthMetricHeartRateBPM);
     snprintf(s_hr_buffer, sizeof(s_hr_buffer), "%d", hr);
+  } else {
+    snprintf(s_hr_buffer, sizeof(s_hr_buffer), "%s", "");
   }
   snprintf(s_health_buffer, sizeof(s_health_buffer), "%s%s%s", s_steps_buffer, s_space_buffer, s_hr_buffer);
   text_layer_set_text(s_health_layer, s_health_buffer);
@@ -540,7 +547,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   if (show_hr_t) {
     settings.ShowHR = show_hr_t->value->int32 == 1;
   }
-  if ((!prev_ShowSteps && settings.ShowSteps) || (!prev_ShowHR && settings.ShowHR)) {
+  if ((prev_ShowSteps != settings.ShowSteps) || (prev_ShowHR != settings.ShowHR)) {
     update_health();
   }
   Tuple *show_sun_t = dict_find(iterator, MESSAGE_KEY_ShowSun);
