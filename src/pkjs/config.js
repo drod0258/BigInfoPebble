@@ -8,11 +8,15 @@ module.exports = [
     "defaultValue": "Customize your watchface appearance and preferences."
   },
   {
+    "type": "submit",
+    "defaultValue": "Save Settings"
+  },
+  {
     "type": "section",
     "items": [
       {
         "type": "heading",
-        "defaultValue": "Colors"
+        "defaultValue": "Theme"
       },
       {
         "type": "color",
@@ -55,7 +59,7 @@ module.exports = [
     "items": [
       {
         "type": "heading",
-        "defaultValue": "Preferences"
+        "defaultValue": "Date"
       },
       {
         "type": "toggle",
@@ -66,8 +70,8 @@ module.exports = [
       {
         "type": "toggle",
         "messageKey": "ShowDate2",
-        "label": "Show additional Day/Year",
-        "description": "Only for larger screens e.g. emery",
+        "label": "Show additional Date",
+        "description": "Day/Year for larger screens (Time 2)",
         "defaultValue": false
       },
       {
@@ -75,6 +79,49 @@ module.exports = [
         "messageKey": "AltDate",
         "label": "Alternate Date Format",
         "description": "Toggle between `Day Mon DD` and `YYYY-MM-DD`",
+        "defaultValue": false
+      }
+    ]
+  },
+  {
+    "type": "section",
+    "items": [
+      {
+        "type": "heading",
+        "defaultValue": "Health"
+      },
+      {
+        "type": "toggle",
+        "messageKey": "ShowSteps",
+        "label": "Show Steps",
+        "defaultValue": false
+      },
+      {
+        "type": "toggle",
+        "messageKey": "ShowHR",
+        "label": "Show Heartrate",
+        "defaultValue": false,
+        "description": "Health data is updated every minute"
+      }
+    ]
+  },
+  {
+    "type": "section",
+    "items": [
+      {
+        "type": "heading",
+        "defaultValue": "Location"
+      },
+      {
+        "type": "toggle",
+        "messageKey": "ShowSun",
+        "label": "Show Sunrise/Sunset",
+        "defaultValue": false
+      },
+      {
+        "type": "toggle",
+        "messageKey": "ShowMoon",
+        "label": "Show Moonphase",
         "defaultValue": false
       },
       {
@@ -99,28 +146,40 @@ module.exports = [
         "step": 1
       },
       {
-        "type": "toggle",
-        "messageKey": "ShowSteps",
-        "label": "Show Steps",
-        "defaultValue": false
+        "type": "input",
+        "messageKey": "Latitude",
+        "defaultValue": "",
+        "label": "Manual Location - Latitude",
+        "attributes": {
+          "placeholder": "eg: 40.7127 (leave blank to use GPS)",
+          "type": "number",
+          "min": "-90",
+          "max": "90",
+          "step": ".000001"
+        }
       },
       {
-        "type": "toggle",
-        "messageKey": "ShowHR",
-        "label": "Show Heartrate",
-        "defaultValue": false
-      },
+        "type": "input",
+        "messageKey": "Longitude",
+        "defaultValue": "",
+        "label": "Manual Location - Longitude",
+        "description": "Leave both blank to use GPS location for weather & sun times",
+        "attributes": {
+          "placeholder": "eg: -74.0061 (leave blank to use GPS)",
+          "type": "number",
+          "min": "-180",
+          "max": "180",
+          "step": ".000001"
+        }
+      }
+    ]
+  },
+  {
+    "type": "section",
+    "items": [
       {
-        "type": "toggle",
-        "messageKey": "ShowSun",
-        "label": "Show Sunrise/Sunset",
-        "defaultValue": false
-      },
-      {
-        "type": "toggle",
-        "messageKey": "ShowMoon",
-        "label": "Show Moonphase",
-        "defaultValue": false
+        "type": "heading",
+        "defaultValue": "Preferences"
       },
       {
         "type": "toggle",
@@ -139,33 +198,6 @@ module.exports = [
         "messageKey": "BluetoothVibrate",
         "label": "Vibrate when Bluetooth Disconnects",
         "defaultValue": false
-      },
-      {
-        "type": "input",
-        "messageKey": "Latitude",
-        "defaultValue": "",
-        "label": "Manual Location - Latitude",
-        "attributes": {
-          "placeholder": "eg: 40.7127 (leave blank to use GPS)",
-          "type": "number",
-          "min": "-90",
-          "max": "90",
-          "step": ".000001"
-        }
-      },
-      {
-        "type": "input",
-        "messageKey": "Longitude",
-        "defaultValue": "",
-        "label": "Manual Location - Longitude",
-        "description": "Leave both blank to use GPS location for weather & sun times. You can use <a href =https://www.google.com/maps>Google Maps</a> or <a href =https://www.openstreetmap.org/>OpenStreetMap</a> to find latitude & longitude.",
-        "attributes": {
-          "placeholder": "eg: -74.0061 (leave blank to use GPS)",
-          "type": "number",
-          "min": "-180",
-          "max": "180",
-          "step": ".000001"
-        }
       }
     ]
   },
