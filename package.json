@@ -41,7 +41,6 @@
     "messageKeys": [
       "NightTheme",
       "BackgroundColorDay",
-      "TextColorDay",
       "TimeColorDay",
       "DateColorDay",
       "WeatherColorDay",
@@ -50,7 +49,6 @@
       "MoonColorDay",
       "BatteryColorDay",
       "BackgroundColorNight",
-      "TextColorNight",
       "TimeColorNight",
       "DateColorNight",
       "WeatherColorNight",

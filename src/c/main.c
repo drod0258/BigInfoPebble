@@ -7,7 +7,6 @@
 typedef struct ClaySettings {
   // user settings
   GColor BackgroundColor;
-  GColor TextColor;
   GColor TimeColor;
   GColor DateColor;
   GColor WeatherColor;
@@ -16,7 +15,6 @@ typedef struct ClaySettings {
   GColor MoonColor;
   GColor BatteryColor;
   GColor BackgroundColorDay;
-  GColor TextColorDay;
   GColor TimeColorDay;
   GColor DateColorDay;
   GColor WeatherColorDay;
@@ -25,7 +23,6 @@ typedef struct ClaySettings {
   GColor MoonColorDay;
   GColor BatteryColorDay;
   GColor BackgroundColorNight;
-  GColor TextColorNight;
   GColor TimeColorNight;
   GColor DateColorNight;
   GColor WeatherColorNight;
@@ -94,7 +91,6 @@ static Layer *s_window_layer;
 static void prv_default_settings() {
   // user settings
   settings.BackgroundColorDay = GColorWhite;
-  settings.TextColorDay = GColorBlack;
   settings.TimeColorDay = GColorBlack;
   settings.DateColorDay = GColorBlack;
   settings.WeatherColorDay = GColorBlack;
@@ -103,7 +99,6 @@ static void prv_default_settings() {
   settings.MoonColorDay = GColorBlack;
   settings.BatteryColorDay = GColorBlack;
   settings.BackgroundColorNight = GColorBlack;
-  settings.TextColorNight = GColorWhite;
   settings.TimeColorNight = GColorWhite;
   settings.DateColorNight = GColorWhite;
   settings.WeatherColorNight = GColorWhite;
@@ -112,7 +107,6 @@ static void prv_default_settings() {
   settings.MoonColorNight = GColorWhite;
   settings.BatteryColorNight = GColorWhite;
   settings.BackgroundColor = settings.BackgroundColorDay;
-  settings.TextColor = settings.TextColorDay;
   settings.TimeColor = settings.TimeColorDay;
   settings.DateColor = settings.DateColorDay;
   settings.WeatherColor = settings.WeatherColorDay;
@@ -229,7 +223,6 @@ static void prv_load_settings() {
 static void prv_update_display() {
   if (settings.NightTheme && !settings.IsDay) {
     settings.BackgroundColor = settings.BackgroundColorNight;
-    settings.TextColor = settings.TextColorNight;
     settings.TimeColor = settings.TimeColorNight;
     settings.DateColor = settings.DateColorNight;
     settings.WeatherColor = settings.WeatherColorNight;
@@ -240,7 +233,6 @@ static void prv_update_display() {
   }
   else {
     settings.BackgroundColor = settings.BackgroundColorDay;
-    settings.TextColor = settings.TextColorDay;
     settings.TimeColor = settings.TimeColorDay;
     settings.DateColor = settings.DateColorDay;
     settings.WeatherColor = settings.WeatherColorDay;
@@ -263,6 +255,7 @@ static void prv_update_display() {
   text_layer_set_text_color(s_sunrise_layer, settings.SunColor);
   text_layer_set_text_color(s_sunset_layer, settings.SunColor);
   text_layer_set_text_color(s_moon_layer, settings.MoonColor);
+  text_layer_set_text_color(s_bt_icon_layer, settings.TimeColor);
 
   // Show/hide based on setting
   layer_set_hidden(text_layer_get_layer(s_date_layer), !settings.ShowDate);
@@ -546,10 +539,6 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   if (bg_color_day_t) {
     settings.BackgroundColorDay = GColorFromHEX(bg_color_day_t->value->int32);
   }
-  Tuple *text_color_day_t = dict_find(iterator, MESSAGE_KEY_TextColorDay);
-  if (text_color_day_t) {
-    settings.TextColorDay = GColorFromHEX(text_color_day_t->value->int32);
-  }
   Tuple *time_color_day_t = dict_find(iterator, MESSAGE_KEY_TimeColorDay);
   if (time_color_day_t) {
     settings.TimeColorDay = GColorFromHEX(time_color_day_t->value->int32);
@@ -581,10 +570,6 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   Tuple *bg_color_night_t = dict_find(iterator, MESSAGE_KEY_BackgroundColorNight);
   if (bg_color_night_t) {
     settings.BackgroundColorNight = GColorFromHEX(bg_color_night_t->value->int32);
-  }
-  Tuple *text_color_night_t = dict_find(iterator, MESSAGE_KEY_TextColorNight);
-  if (text_color_night_t) {
-    settings.TextColorNight = GColorFromHEX(text_color_night_t->value->int32);
   }
   Tuple *time_color_night_t = dict_find(iterator, MESSAGE_KEY_TimeColorNight);
   if (time_color_night_t) {
@@ -732,9 +717,11 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 
   // Save and apply if any settings were changed
   if (
-    bg_color_day_t || text_color_day_t || bg_color_night_t || text_color_night_t || night_theme_t || 
-    time_color_day_t || date_color_day_t || weather_color_day_t || health_color_day_t || sun_color_day_t || moon_color_day_t || battery_color_day_t || 
-    time_color_night_t || date_color_night_t || weather_color_night_t || health_color_night_t || sun_color_night_t || moon_color_night_t || battery_color_night_t || 
+    bg_color_day_t || bg_color_night_t || night_theme_t || 
+    time_color_day_t || date_color_day_t || weather_color_day_t || health_color_day_t || 
+    sun_color_day_t || moon_color_day_t || battery_color_day_t || 
+    time_color_night_t || date_color_night_t || weather_color_night_t || health_color_night_t || 
+    sun_color_night_t || moon_color_night_t || battery_color_night_t || 
     show_date_t || show_date2_t || alt_date_t || show_steps_t || show_hr_t || 
     show_weather_t || temp_unit_t || weahter_interval_t || show_sun_t || show_moon_t || man_lat_t || man_lon_t || 
     show_phone_battery_t || periodic_vibrate_t || disconnect_alert_t) {
@@ -1046,7 +1033,7 @@ static void main_window_load(Window *window) {
   s_bt_icon_layer = text_layer_create(
       GRect(((bounds.size.w / 5) * 2), bt_y, ((bounds.size.w / 5) * 1), (info_height + 4)));
   text_layer_set_background_color(s_bt_icon_layer, GColorClear);
-  text_layer_set_text_color(s_bt_icon_layer, settings.TextColor);
+  text_layer_set_text_color(s_bt_icon_layer, settings.TimeColor);
   text_layer_set_font(s_bt_icon_layer, s_bt_font);
   text_layer_set_text_alignment(s_bt_icon_layer, GTextAlignmentCenter);
   text_layer_set_text(s_bt_icon_layer, "z");

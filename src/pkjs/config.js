@@ -27,12 +27,6 @@ module.exports = [
       },
       {
         "type": "color",
-        "messageKey": "TextColorDay",
-        "label": "Text Color",
-        "defaultValue": "0x000000",
-      },
-      {
-        "type": "color",
         "messageKey": "TimeColorDay",
         "label": "Time Color",
         "defaultValue": "0x000000"
@@ -94,12 +88,6 @@ module.exports = [
         "label": "Night Background Color",
         "defaultValue": "0x000000",
         "allowGray": true
-      },
-      {
-        "type": "color",
-        "messageKey": "TextColorNight",
-        "label": "Night Text Color",
-        "defaultValue": "0xFFFFFF"
       },
       {
         "type": "color",
