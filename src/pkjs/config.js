@@ -198,7 +198,7 @@ module.exports = [
         "label": "Show additional Date",
         "description": "`YYYY` or `Day`",
         "defaultValue": false,
-        "capabilities": ["DISPLAY_200x228"]
+        "capabilities": ["NOT_DISPLAY_144x168"]
       },
       {
         "type": "toggle",
@@ -228,7 +228,8 @@ module.exports = [
         "messageKey": "ShowHR",
         "label": "Show Heartrate",
         "defaultValue": false,
-        "description": "Health data is updated every minute"
+        "description": "Health data is updated every minute",
+        "capabilities": ["NOT_PLATFORM_APLITE", "NOT_PLATFORM_FLINT", "NOT_PLATFORM_GABBRO"]
       }
     ]
   },

@@ -810,7 +810,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
       int bar_height = (PBL_DISPLAY_HEIGHT / 24);
       int bar_width = PBL_DISPLAY_WIDTH / 1.1;
       int bar_x = (PBL_DISPLAY_WIDTH - bar_width) / 2;
-      int bar_y = PBL_DISPLAY_HEIGHT - (bar_offset - (PBL_DISPLAY_HEIGHT / 12));
+      int bar_y = PBL_IF_ROUND_ELSE(PBL_DISPLAY_HEIGHT - (bar_offset + (PBL_DISPLAY_HEIGHT / 3.75)), PBL_DISPLAY_HEIGHT - (bar_offset - (PBL_DISPLAY_HEIGHT / 12)));
       if (settings.ShowPhoneBattery) {
         bar_width = (bar_width / 2) - (bar_x / 2);
       }
@@ -824,12 +824,12 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     ((prev_ShowSteps && prev_ShowHR) != (settings.ShowSteps && settings.ShowHR)) &&
     (PBL_DISPLAY_HEIGHT >= 228) ) {
       int bar_offset = (PBL_DISPLAY_HEIGHT / 6);
-      int bar_y = PBL_DISPLAY_HEIGHT - (bar_offset - (PBL_DISPLAY_HEIGHT / 12));
+      int bar_y = PBL_IF_ROUND_ELSE(PBL_DISPLAY_HEIGHT - (bar_offset + (PBL_DISPLAY_HEIGHT / 3.75)), PBL_DISPLAY_HEIGHT - (bar_offset - (PBL_DISPLAY_HEIGHT / 12)));
       int info_height = 28;
       int info_padding = 10;
       // weather
       int weather_x = 0;
-      int weather_y = bar_y - (info_height * 2) - (PBL_DISPLAY_HEIGHT / 15);
+      int weather_y = PBL_IF_ROUND_ELSE(bar_y + (15), bar_y - (info_height * 2) - (PBL_DISPLAY_HEIGHT / 15));
       int weather_width = ((PBL_DISPLAY_WIDTH / 10) * 4);
       if (settings.ShowSteps && settings.ShowHR) {
         weather_width = (weather_width * 0.75);
@@ -926,7 +926,7 @@ static void prv_unobstructed_change(AnimationProgress progress, void *context) {
 
   // Reposition layers to fit in the available space
   int bar_offset = (PBL_DISPLAY_HEIGHT / 6);
-  int bar_y = bounds.size.h - (bar_offset - (bounds.size.h / 12));
+  int bar_y = PBL_IF_ROUND_ELSE(bounds.size.h - (bar_offset + (bounds.size.h / 3.75)), bounds.size.h - (bar_offset - (bounds.size.h / 12)));
 
   GRect watch_battery_frame = layer_get_frame(s_battery_layer);
   watch_battery_frame.origin.y = bar_y;
@@ -982,7 +982,7 @@ static void main_window_load(Window *window) {
   date_height = info_height;
   s_bt_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_DRIPICONS_16));
   s_weather_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_WEATHERICONS_18));
-  #if defined(PBL_PLATFORM_EMERY)
+  #if defined(PBL_PLATFORM_EMERY) || defined(PBL_PLATFORM_GABBRO)
     s_time_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_TALLBOLD_64));
     time_padding = 2;
     time_height = 64;
@@ -1028,7 +1028,7 @@ static void main_window_load(Window *window) {
   int bar_height = (PBL_DISPLAY_HEIGHT / 24);
   int bar_width = bounds.size.w / 1.1;
   int bar_x = (bounds.size.w - bar_width) / 2;
-  int bar_y = bounds.size.h - (bar_offset - (bounds.size.h / 12));
+  int bar_y = PBL_IF_ROUND_ELSE(bounds.size.h - (bar_offset + (bounds.size.h / 3.75)), bounds.size.h - (bar_offset - (bounds.size.h / 12)));
   int phone_bar_width = (bar_width / 2) - (bar_x / 2);
   if (settings.ShowPhoneBattery) {
     bar_width = phone_bar_width;
@@ -1043,7 +1043,7 @@ static void main_window_load(Window *window) {
   layer_set_update_proc(s_phone_battery_layer, phone_battery_update_proc);
 
   // Create weather TextLayer
-  int weather_y = bar_y - (info_height * 2) - (bounds.size.h / 15);
+  int weather_y = PBL_IF_ROUND_ELSE(bar_y + (bar_height * 1.4), bar_y - (info_height * 2) - (bounds.size.h / 15));
   int weather_width = ((bounds.size.w / 10) * 4);
   int weather_x = 0;
   if ((settings.ShowSteps && settings.ShowHR) && (PBL_DISPLAY_HEIGHT >= 228)) {
