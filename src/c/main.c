@@ -258,8 +258,10 @@ static void prv_update_display() {
     settings.BatteryColor = PBL_IF_COLOR_ELSE(settings.BatteryColorDay, settings.TextColorDay);
   }
 
-  // Set backlight color
-  light_set_color_rgb888(settings.BacklightColor);
+  #if defined(PBL_RGB_BACKLIGHT)
+    // Set backlight color
+    light_set_color_rgb888(settings.BacklightColor);
+  #endif
 
   // Set background color
   window_set_background_color(s_main_window, settings.BackgroundColor);
@@ -346,7 +348,7 @@ static void update_weather() {
 }
 
 static void update_health() {
-  static char s_steps_buffer[8];
+  static char s_steps_buffer[12];
   static char s_hr_buffer[8];
   static char s_space_buffer[4];
   static char s_health_buffer[24];
@@ -462,13 +464,15 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
     if (settings.PeriodicVibrate) {
       vibes_double_pulse();
     }
-    if (settings.PeriodicSound) {
-      static const SpeakerNote s_single_beep_sine[] = {
-        { .midi_note = 108, .waveform = SpeakerWaveformSine,  .duration_ms = 150 },
-        { .midi_note = 0,   .waveform = SpeakerWaveformSine,  .duration_ms = 100 }
-      };
-      speaker_play_notes(s_single_beep_sine, ARRAY_LENGTH(s_single_beep_sine), 0);
-    }
+    #if defined(PBL_SPEAKER)
+      if (settings.PeriodicSound) {
+        static const SpeakerNote s_single_beep_sine[] = {
+          { .midi_note = 108, .waveform = SpeakerWaveformSine,  .duration_ms = 150 },
+          { .midi_note = 0,   .waveform = SpeakerWaveformSine,  .duration_ms = 100 }
+        };
+        speaker_play_notes(s_single_beep_sine, ARRAY_LENGTH(s_single_beep_sine), 0);
+      }
+    #endif
     // generate message request only if showing info and time matches interval
     if (settings.ShowWeather || settings.ShowSun || settings.ShowMoon || settings.NightTheme) {
       bool requestWeather = false;
@@ -542,15 +546,17 @@ static void bluetooth_callback(bool connected) {
     if (settings.BluetoothVibrate) {
       vibes_long_pulse();
     }
-    if (settings.BluetoothSound) {
-      static const SpeakerNote s_double_beep_sawtooth[] = {
-        { .midi_note = 96, .waveform = SpeakerWaveformSawtooth,  .duration_ms = 150 },
-        { .midi_note = 0,   .waveform = SpeakerWaveformSawtooth,  .duration_ms = 100 },
-        { .midi_note = 96, .waveform = SpeakerWaveformSawtooth,  .duration_ms = 150 },
-        { .midi_note = 0,   .waveform = SpeakerWaveformSawtooth,  .duration_ms = 100 }
-      };
-      speaker_play_notes(s_double_beep_sawtooth, ARRAY_LENGTH(s_double_beep_sawtooth), 0);
-    }
+    #if defined(PBL_SPEAKER)
+      if (settings.BluetoothSound) {
+        static const SpeakerNote s_double_beep_sawtooth[] = {
+          { .midi_note = 96, .waveform = SpeakerWaveformSawtooth,  .duration_ms = 150 },
+          { .midi_note = 0,   .waveform = SpeakerWaveformSawtooth,  .duration_ms = 100 },
+          { .midi_note = 96, .waveform = SpeakerWaveformSawtooth,  .duration_ms = 150 },
+          { .midi_note = 0,   .waveform = SpeakerWaveformSawtooth,  .duration_ms = 100 }
+        };
+        speaker_play_notes(s_double_beep_sawtooth, ARRAY_LENGTH(s_double_beep_sawtooth), 0);
+      }
+    #endif
   }
 }
 
