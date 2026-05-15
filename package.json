@@ -28,7 +28,8 @@
       "basalt",
       "diorite",
       "emery",
-      "flint"
+      "flint",
+      "gabbro"
     ],
     "watchapp": {
       "watchface": true
@@ -100,7 +101,8 @@
           "file": "fonts/tallbolder.ttf",
           "characterRegex": "[0-9: ]",
           "targetPlatforms": [
-            "emery"
+            "emery",
+            "gabbro"
           ]
         },
         {
