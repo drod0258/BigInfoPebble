@@ -315,16 +315,28 @@ module.exports = [
         "defaultValue": false
       },
       {
-        "type": "toggle",
-        "messageKey": "PeriodicVibrate",
-        "label": "Vibrate Hourly",
-        "defaultValue": false
+        "type": "select",
+        "messageKey": "PeriodicNotify",
+        "label": "Hourly Notification",
+        "options": [
+          {"value": "0", "label": "Off"},
+          {"value": "1", "label": "Vibrate"},
+          {"value": "2", "label": "Sound"},
+          {"value": "3", "label": "Vibrate & Sound"},
+        ],
+        "defaultValue": "0"
       },
       {
-        "type": "toggle",
-        "messageKey": "BluetoothVibrate",
-        "label": "Vibrate when Bluetooth Disconnects",
-        "defaultValue": false
+        "type": "select",
+        "messageKey": "BluetoothNotify",
+        "label": "Bluetooth Disconnect Notification",
+        "options": [
+          {"value": "0", "label": "Off"},
+          {"value": "1", "label": "Vibrate"},
+          {"value": "2", "label": "Sound"},
+          {"value": "3", "label": "Vibrate & Sound"},
+        ],
+        "defaultValue": "0"
       }
     ]
   },
