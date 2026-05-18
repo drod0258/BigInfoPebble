@@ -318,28 +318,49 @@ module.exports = [
         "defaultValue": false
       },
       {
-        "type": "select",
-        "messageKey": "PeriodicNotify",
-        "label": "Hourly Notification",
-        "options": [
-          {"value": "0", "label": "Off"},
-          {"value": "1", "label": "Vibrate"},
-          {"value": "2", "label": "Sound"},
-          {"value": "3", "label": "Vibrate & Sound"},
-        ],
-        "defaultValue": "0"
+        "type": "text",
+        "defaultValue": "Hourly Notification"
       },
       {
-        "type": "select",
-        "messageKey": "BluetoothNotify",
-        "label": "Bluetooth Disconnect Notification",
-        "options": [
-          {"value": "0", "label": "Off"},
-          {"value": "1", "label": "Vibrate"},
-          {"value": "2", "label": "Sound"},
-          {"value": "3", "label": "Vibrate & Sound"},
-        ],
-        "defaultValue": "0"
+        "type": "toggle",
+        "messageKey": "PeriodicVibrate",
+        "label": "  - Vibrate",
+        "defaultValue": false
+      },
+      {
+        "type": "toggle",
+        "messageKey": "PeriodicSound",
+        "label": "  - Sound",
+        "defaultValue": false,
+        "capabilities": ["NOT_PLATFORM_APLITE", "NOT_PLATFORM_BASALT", "NOT_PLATFORM_CHALK", "NOT_PLATFORM_DIORITE", "NOT_PLATFORM_GABBRO"]
+      },
+      {
+        "type": "text",
+        "defaultValue": "Bluetooth Disconnect Notification"
+      },
+      {
+        "type": "toggle",
+        "messageKey": "BluetoothVibrate",
+        "label": "  - Vibrate",
+        "defaultValue": false
+      },
+      {
+        "type": "toggle",
+        "messageKey": "BluetoothSound",
+        "label": "  - Sound",
+        "defaultValue": false,
+        "capabilities": ["NOT_PLATFORM_APLITE", "NOT_PLATFORM_BASALT", "NOT_PLATFORM_CHALK", "NOT_PLATFORM_DIORITE", "NOT_PLATFORM_GABBRO"]
+      },
+      {
+        "type": "slider",
+        "messageKey": "Volume",
+        "label": "Speaker Volume",
+        "description": "Set volume to `0` to use the system default",
+        "defaultValue": 50,
+        "min": 0,
+        "max": 100,
+        "step": 5,
+        "capabilities": ["NOT_PLATFORM_APLITE", "NOT_PLATFORM_BASALT", "NOT_PLATFORM_CHALK", "NOT_PLATFORM_DIORITE", "NOT_PLATFORM_GABBRO"]
       }
     ]
   },

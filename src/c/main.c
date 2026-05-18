@@ -51,6 +51,7 @@ typedef struct ClaySettings {
   bool PeriodicSound;
   bool BluetoothVibrate;
   bool BluetoothSound;
+  int Volume;
   int Latitude;
   int Longitude;
   // storage
@@ -142,6 +143,7 @@ static void prv_default_settings() {
   settings.PeriodicSound = false;
   settings.BluetoothVibrate = false;
   settings.BluetoothSound = false;
+  settings.Volume = 50;
   // storage
   settings.IsDay=false;
   settings.ManualCoordinates=false;
@@ -474,7 +476,7 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
           { .midi_note = 108, .waveform = SpeakerWaveformSine,  .duration_ms = 150 },
           { .midi_note = 0,   .waveform = SpeakerWaveformSine,  .duration_ms = 100 }
         };
-        speaker_play_notes(s_single_beep_sine, ARRAY_LENGTH(s_single_beep_sine), 0);
+        speaker_play_notes(s_single_beep_sine, ARRAY_LENGTH(s_single_beep_sine), settings.Volume);
       }
     #endif
     // generate message request only if showing info and time matches interval
@@ -558,7 +560,7 @@ static void bluetooth_callback(bool connected) {
           { .midi_note = 96, .waveform = SpeakerWaveformSawtooth,  .duration_ms = 150 },
           { .midi_note = 0,   .waveform = SpeakerWaveformSawtooth,  .duration_ms = 100 }
         };
-        speaker_play_notes(s_double_beep_sawtooth, ARRAY_LENGTH(s_double_beep_sawtooth), 0);
+        speaker_play_notes(s_double_beep_sawtooth, ARRAY_LENGTH(s_double_beep_sawtooth), settings.Volume);
       }
     #endif
   }
@@ -714,33 +716,25 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   if (show_phone_battery_t) {
     settings.ShowPhoneBattery = show_phone_battery_t->value->int32 == 1;
   }
-  Tuple *periodic_notify_t = dict_find(iterator, MESSAGE_KEY_PeriodicNotify);
-  if (periodic_notify_t) {
-    int PeriodicNotify = atoi(periodic_notify_t->value->cstring);
-    if ((PeriodicNotify == 1) || (PeriodicNotify == 3)) {
-      settings.PeriodicVibrate = true;
-    } else {
-      settings.PeriodicVibrate = false;
-    }
-    if ((PeriodicNotify == 2) || (PeriodicNotify == 3)) {
-      settings.PeriodicSound = true;
-    } else {
-      settings.PeriodicSound = false;
-    }
+  Tuple *periodic_vibrate_t = dict_find(iterator, MESSAGE_KEY_PeriodicVibrate);
+  if (periodic_vibrate_t) {
+    settings.PeriodicVibrate = periodic_vibrate_t->value->int32 == 1;
   }
-  Tuple *bluetooth_notify_t = dict_find(iterator, MESSAGE_KEY_BluetoothNotify);
-  if (bluetooth_notify_t) {
-    int BluetoothNotify = atoi(bluetooth_notify_t->value->cstring);
-    if ((BluetoothNotify == 1) || (BluetoothNotify == 3)) {
-      settings.BluetoothVibrate = true;
-    } else {
-      settings.BluetoothVibrate = false;
-    }
-    if ((BluetoothNotify == 2) || (BluetoothNotify == 3)) {
-      settings.BluetoothSound = true;
-    } else {
-      settings.BluetoothSound = false;
-    }
+  Tuple *periodic_sound_t = dict_find(iterator, MESSAGE_KEY_PeriodicSound);
+  if (periodic_sound_t) {
+    settings.PeriodicSound = periodic_sound_t->value->int32 == 1;
+  }
+  Tuple *bluetooth_vibrate_t = dict_find(iterator, MESSAGE_KEY_BluetoothVibrate);
+  if (bluetooth_vibrate_t) {
+    settings.BluetoothVibrate = bluetooth_vibrate_t->value->int32 == 1;
+  }
+  Tuple *bluetooth_sound_t = dict_find(iterator, MESSAGE_KEY_BluetoothSound);
+  if (bluetooth_sound_t) {
+    settings.BluetoothSound = bluetooth_sound_t->value->int32 == 1;
+  }
+  Tuple *volume_t = dict_find(iterator, MESSAGE_KEY_Volume);
+  if (volume_t) {
+    settings.Volume = (int)volume_t->value->int32;
   }
 
   // check for manual coordinates
@@ -806,7 +800,8 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     sun_color_night_t || moon_color_night_t || battery_color_night_t || 
     show_date_t || show_date2_t || alt_date_t || show_steps_t || show_hr_t || 
     show_weather_t || temp_unit_t || weahter_interval_t || show_sun_t || show_moon_t || man_lat_t || man_lon_t || 
-    show_phone_battery_t || periodic_notify_t || bluetooth_notify_t) {
+    show_phone_battery_t || periodic_vibrate_t || periodic_sound_t || 
+    bluetooth_vibrate_t || bluetooth_sound_t || volume_t) {
     
     // if show battery was toggled
     if (prev_ShowPhoneBattery != settings.ShowPhoneBattery) {
