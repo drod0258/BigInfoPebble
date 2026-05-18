@@ -5,7 +5,7 @@ A simple, clean Pebble watchface with a large, easy-to-read font. Displays the e
 ## Features
 
 - **Large time display** -- tall bold font, 12 or 24-hour format
-- **Custom color options** -- configurable background and text colors. Optionally switches colors based on sunrise/sunset
+- **Custom color options** -- configurable backlight, background and text colors. Optionally switches colors based on sunrise/sunset
 - **Date** -- year, day, month, date, and ISO 8601 date
 - **Step counter** -- today's steps via Pebble Health
 - **Heartrate** -- beats per mintute via Pebble Health
@@ -15,8 +15,8 @@ A simple, clean Pebble watchface with a large, easy-to-read font. Displays the e
 - **Moon phase** -- 29-phase moon icon and weather conditions use the [weather-icons](https://github.com/erikflowers/weather-icons) font
 - **Watch battery meter** -- color-coded bar (green/yellow/red) with fallback to black and white
 - **Phone battery meter** -- reports the connected phone's battery life from supported devices
-- **Bluetooth indicator** -- icon and optional vibration alert on disconnect
-- **Hourly vibration** -- optional periodic pulse
+- **Bluetooth notification** -- icon and optional vibration and/or sound alert on disconnect
+- **Hourly notification** -- optional periodic vibration and/or sound
 
 ## Want to try it?
 Download on the Pebble store: https://apps.repebble.com/5eda31d774a34edeb1c87a39
@@ -30,6 +30,7 @@ Download on the Pebble store: https://apps.repebble.com/5eda31d774a34edeb1c87a39
 | Diorite | Pebble 2 |
 | Emery | Pebble Time 2 |
 | Flint | Pebble 2 Duo |
+| Gabbro | Pebble Round 2 |
 
 ## Screenshots
 
@@ -41,3 +42,7 @@ Download on the Pebble store: https://apps.repebble.com/5eda31d774a34edeb1c87a39
 ![screenshot-emery-0](screenshots/pebble_screenshot_2026-04-29_06-23-32.png)
 ![screenshot-emery-1](screenshots/pebble_screenshot_2026-04-29_14-08-19.png)
 ![screenshot-emery-2](screenshots/pebble_screenshot_2026-04-29_21-43-30.png)
+
+![screenshot-gabbro-0](screenshots/pebble_screenshot_2026-05-18_10-52-37.png)
+![screenshot-gabbro-1](screenshots/pebble_screenshot_2026-05-18_10-55-36.png)
+![screenshot-gabbro-2](screenshots/pebble_screenshot_2026-05-18_10-57-13.png)
