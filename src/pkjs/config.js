@@ -22,9 +22,10 @@ module.exports = [
         "type": "color",
         "messageKey": "BacklightColorDay",
         "label": "Backglight Color",
-        "defaultValue": "0xFFEFDF",
+        "defaultValue": "0xFFAA55",
         "sunlight": false,
         "layout": "COLOR",
+        "description": "Set backlight to BLACK to use the system default",
         "capabilities": ["PLATFORM_EMERY"]
       },
       {
@@ -109,9 +110,10 @@ module.exports = [
         "type": "color",
         "messageKey": "BacklightColorNight",
         "label": "Night Backglight Color",
-        "defaultValue": "0xFFAF7F",
+        "defaultValue": "0xFF5500",
         "sunlight": false,
         "layout": "COLOR",
+        "description": "Set backlight to BLACK to use the system default",
         "capabilities": ["PLATFORM_EMERY"]
       },
       {

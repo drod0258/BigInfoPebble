@@ -97,7 +97,7 @@ static Layer *s_window_layer;
 // Set default settings
 static void prv_default_settings() {
   // user settings
-  settings.BacklightColorDay = 0xFFEFDF;
+  settings.BacklightColorDay = 0xFFAA55;
   settings.BackgroundColorDay = GColorWhite;
   settings.TextColorDay = GColorBlack;
   settings.TimeColorDay = GColorBlack;
@@ -107,7 +107,7 @@ static void prv_default_settings() {
   settings.SunColorDay = GColorBlack;
   settings.MoonColorDay = GColorBlack;
   settings.BatteryColorDay = GColorBlack;
-  settings.BacklightColorNight = 0xFFAF7F;
+  settings.BacklightColorNight = 0xFF5500;
   settings.BackgroundColorNight = GColorBlack;
   settings.TextColorNight = GColorWhite;
   settings.TimeColorNight = GColorWhite;
@@ -259,8 +259,12 @@ static void prv_update_display() {
   }
 
   #if defined(PBL_RGB_BACKLIGHT)
-    // Set backlight color
-    light_set_color_rgb888(settings.BacklightColor);
+    // If color is set to black use system default color, else set the backlight color
+    if (settings.BacklightColor == 0x000000) {
+      light_set_system_color();
+    } else {
+      light_set_color_rgb888(settings.BacklightColor);
+    }
   #endif
 
   // Set background color
