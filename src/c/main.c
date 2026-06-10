@@ -21,6 +21,7 @@ typedef struct ClaySettings {
   GColor BatteryLowColor;
   int BatteryMidPercent;
   int BatteryLowPercent;
+  bool ShowCharging;
   int BacklightColorDay;
   GColor BackgroundColorDay;
   GColor TextColorDay;
@@ -77,6 +78,7 @@ typedef struct ClaySettings {
   int WeatherTemp;
   int WeatherIcon;
   int PhoneBattery;
+  bool PhoneCharging;
 } ClaySettings;
 
 // An instance of the struct
@@ -104,6 +106,7 @@ static GFont s_weather_font;
 // Battery
 static Layer *s_battery_layer;
 static int s_battery_level;
+static bool s_battery_charging;
 static Layer *s_phone_battery_layer;
 
 // Unobstructed area
@@ -155,6 +158,7 @@ static void prv_default_settings() {
   settings.BatteryLowColor = settings.BatteryLowColorDay;
   settings.BatteryMidPercent = 40;
   settings.BatteryLowPercent = 20;
+  settings.ShowCharging = false;
   settings.NightTheme = false;
   settings.ShowDate = false;
   settings.ShowDate2 = false;
@@ -181,6 +185,7 @@ static void prv_default_settings() {
   settings.WeatherTemp=-99;
   settings.WeatherIcon=15;
   settings.PhoneBattery=0;
+  settings.PhoneCharging=false;
 }
 
 static char* weather_conditions[] = {
@@ -544,10 +549,11 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
 
 static void battery_callback(BatteryChargeState state) {
   s_battery_level = state.charge_percent;
+  s_battery_charging = state.is_charging;
   layer_mark_dirty(s_battery_layer);
 }
 
-static void battery_update_proc(Layer *layer, GContext *ctx, int battery_level) {
+static void battery_update_proc(Layer *layer, GContext *ctx, int battery_level, bool is_charging) {
   GRect bounds = layer_get_bounds(layer);
 
   // Find the width of the bar (inside the border)
@@ -559,7 +565,9 @@ static void battery_update_proc(Layer *layer, GContext *ctx, int battery_level) 
 
   // Choose color based on battery level
   GColor bar_color;
-  if (battery_level <= settings.BatteryLowPercent) {
+  if (settings.ShowCharging && is_charging) {
+    bar_color = settings.BatteryChargingColor;
+  } else if (battery_level <= settings.BatteryLowPercent) {
     bar_color = settings.BatteryLowColor;
   } else if (battery_level <= settings.BatteryMidPercent) {
     bar_color = settings.BatteryMidColor;
@@ -573,11 +581,11 @@ static void battery_update_proc(Layer *layer, GContext *ctx, int battery_level) 
 }
 
 static void watch_battery_update_proc(Layer *layer, GContext *ctx) {
-  battery_update_proc(layer, ctx, s_battery_level);
+  battery_update_proc(layer, ctx, s_battery_level, s_battery_charging);
 }
 
 static void phone_battery_update_proc(Layer *layer, GContext *ctx) {
-  battery_update_proc(layer, ctx, settings.PhoneBattery);
+  battery_update_proc(layer, ctx, settings.PhoneBattery, settings.PhoneCharging);
 }
 
 static void bluetooth_callback(bool connected) {
@@ -784,6 +792,10 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   if (show_phone_battery_t) {
     settings.ShowPhoneBattery = show_phone_battery_t->value->int32 == 1;
   }
+  Tuple *show_charging_t = dict_find(iterator, MESSAGE_KEY_ShowCharging);
+  if (show_charging_t) {
+    settings.ShowCharging = show_charging_t->value->int32 == 1;
+  }
   Tuple *battery_mid_percent_t = dict_find(iterator, MESSAGE_KEY_BatteryMidPercent);
   if (battery_mid_percent_t) {
     settings.BatteryMidPercent = (int)battery_mid_percent_t->value->int32;
@@ -863,6 +875,12 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   Tuple *battery_tuple = dict_find(iterator, MESSAGE_KEY_BATTERY);
   if (battery_tuple) {
     settings.PhoneBattery = (int)battery_tuple->value->int32;
+  }
+  Tuple *charging_tuple = dict_find(iterator, MESSAGE_KEY_CHARGING);
+  if (charging_tuple) {
+    settings.PhoneCharging = charging_tuple->value->int32 == 1;
+  }
+  if (battery_tuple || charging_tuple) {
     layer_mark_dirty(s_phone_battery_layer);
   }
 
@@ -878,7 +896,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     battery_full_color_night_t || battery_mid_color_night_t || battery_low_color_night_t || 
     show_date_t || show_date2_t || alt_date_t || show_steps_t || show_hr_t || 
     show_weather_t || temp_unit_t || weahter_interval_t || show_sun_t || show_moon_t || man_lat_t || man_lon_t || 
-    battery_mid_percent_t || battery_low_percent_t || 
+    show_charging_t || battery_mid_percent_t || battery_low_percent_t || 
     show_phone_battery_t || periodic_vibrate_t || periodic_sound_t || 
     bluetooth_vibrate_t || bluetooth_sound_t || volume_t) {
     
@@ -970,7 +988,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
       }
       app_message_outbox_send();
     }
-  } else if (temp_tuple || conditions_tuple || sunrise_tuple || sunset_tuple || moon_tuple || battery_tuple) {
+  } else if (temp_tuple || conditions_tuple || sunrise_tuple || sunset_tuple || moon_tuple || battery_tuple || charging_tuple) {
     prv_save_settings();
   }
 }

@@ -159,8 +159,10 @@ function sunInfo (pos){
 // battery functions
 function sendBatteryLevel(battery, reportInterval) {
   var batteryLevel = Math.floor(battery.level * 100);
+  var batteryCharging = battery.charging;
   var dictionary = {
-    "BATTERY": batteryLevel
+    "BATTERY": batteryLevel,
+    "CHARGING": batteryCharging
   };
   if (batteryLevel % reportInterval == 0) {
     Pebble.sendAppMessage(dictionary,
@@ -178,6 +180,9 @@ function batteryLevelSubscribe(battery) {
   battery.addEventListener('levelchange', function() {
     sendBatteryLevel(battery, 5);
   }, false);
+  battery.addEventListener('chargingchange', function() {
+    sendBatteryLevel(battery, 1);
+  }, false);
   // also send battery level immediately
   sendBatteryLevel(battery, 1);
 }
@@ -185,6 +190,9 @@ function batteryLevelUnsubscribe(battery) {
   // Stop listening for changes in battery level
   battery.removeEventListener('levelchange', function() {
     sendBatteryLevel(battery, 5);
+  }, false);
+  battery.removeEventListener('chargingchange', function() {
+    sendBatteryLevel(battery, 1);
   }, false);
 }
 function batteryStatusFailure() {

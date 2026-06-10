@@ -95,8 +95,10 @@
       "REQUEST_BATTERY",
       "UNSUBSCRIBE_BATTERY",
       "BATTERY",
+      "CHARGING",
       "BatteryMidPercent",
       "BatteryLowPercent",
+      "ShowCharging",
       "Latitude",
       "Longitude"
     ],
