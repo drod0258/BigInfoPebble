@@ -138,11 +138,11 @@ static void prv_default_settings() {
   settings.HealthColorNight = GColorWhite;
   settings.SunColorNight = GColorWhite;
   settings.MoonColorNight = GColorWhite;
-  settings.BatteryOutlineColorDay = GColorWhite;
-  settings.BatteryChargingColorDay = GColorBlue;
-  settings.BatteryFullColorDay = GColorGreen;
-  settings.BatteryMidColorDay = GColorChromeYellow;
-  settings.BatteryLowColorDay = GColorRed;
+  settings.BatteryOutlineColorNight = GColorWhite;
+  settings.BatteryChargingColorNight = GColorBlue;
+  settings.BatteryFullColorNight = GColorGreen;
+  settings.BatteryMidColorNight = GColorChromeYellow;
+  settings.BatteryLowColorNight = GColorRed;
   settings.BacklightColor = settings.BacklightColorDay;
   settings.BackgroundColor = settings.BackgroundColorDay;
   settings.TimeColor = settings.TimeColorDay;
