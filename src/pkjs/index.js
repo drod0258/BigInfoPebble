@@ -159,7 +159,12 @@ function sunInfo (pos){
 // battery functions
 function sendBatteryLevel(battery, reportInterval) {
   var batteryLevel = Math.floor(battery.level * 100);
-  var batteryCharging = battery.charging;
+  var batteryCharging = 0;
+  if (battery.charging) {
+    batteryCharging = 1;
+  }
+  console.log('battery level: ' + batteryLevel);
+  console.log('battery charging: ' + batteryCharging);
   var dictionary = {
     "BATTERY": batteryLevel,
     "CHARGING": batteryCharging
