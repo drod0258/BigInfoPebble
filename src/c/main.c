@@ -14,7 +14,13 @@ typedef struct ClaySettings {
   GColor HealthColor;
   GColor SunColor;
   GColor MoonColor;
-  GColor BatteryColor;
+  GColor BatteryOutlineColor;
+  GColor BatteryChargingColor;
+  GColor BatteryFullColor;
+  GColor BatteryMidColor;
+  GColor BatteryLowColor;
+  int BatteryMidPercent;
+  int BatteryLowPercent;
   int BacklightColorDay;
   GColor BackgroundColorDay;
   GColor TextColorDay;
@@ -24,7 +30,11 @@ typedef struct ClaySettings {
   GColor HealthColorDay;
   GColor SunColorDay;
   GColor MoonColorDay;
-  GColor BatteryColorDay;
+  GColor BatteryOutlineColorDay;
+  GColor BatteryChargingColorDay;
+  GColor BatteryFullColorDay;
+  GColor BatteryMidColorDay;
+  GColor BatteryLowColorDay;
   int BacklightColorNight;
   GColor BackgroundColorNight;
   GColor TextColorNight;
@@ -34,7 +44,11 @@ typedef struct ClaySettings {
   GColor HealthColorNight;
   GColor SunColorNight;
   GColor MoonColorNight;
-  GColor BatteryColorNight;
+  GColor BatteryOutlineColorNight;
+  GColor BatteryChargingColorNight;
+  GColor BatteryFullColorNight;
+  GColor BatteryMidColorNight;
+  GColor BatteryLowColorNight;
   bool NightTheme;
   bool ShowWeather;
   bool TemperatureUnit;
@@ -107,7 +121,11 @@ static void prv_default_settings() {
   settings.HealthColorDay = GColorBlack;
   settings.SunColorDay = GColorBlack;
   settings.MoonColorDay = GColorBlack;
-  settings.BatteryColorDay = GColorBlack;
+  settings.BatteryOutlineColorDay = GColorBlack;
+  settings.BatteryChargingColorDay = GColorBlue;
+  settings.BatteryFullColorDay = GColorGreen;
+  settings.BatteryMidColorDay = GColorChromeYellow;
+  settings.BatteryLowColorDay = GColorRed;
   settings.BacklightColorNight = 0xFF5500;
   settings.BackgroundColorNight = GColorBlack;
   settings.TextColorNight = GColorWhite;
@@ -117,7 +135,11 @@ static void prv_default_settings() {
   settings.HealthColorNight = GColorWhite;
   settings.SunColorNight = GColorWhite;
   settings.MoonColorNight = GColorWhite;
-  settings.BatteryColorNight = GColorWhite;
+  settings.BatteryOutlineColorDay = GColorWhite;
+  settings.BatteryChargingColorDay = GColorBlue;
+  settings.BatteryFullColorDay = GColorGreen;
+  settings.BatteryMidColorDay = GColorChromeYellow;
+  settings.BatteryLowColorDay = GColorRed;
   settings.BacklightColor = settings.BacklightColorDay;
   settings.BackgroundColor = settings.BackgroundColorDay;
   settings.TimeColor = settings.TimeColorDay;
@@ -126,7 +148,13 @@ static void prv_default_settings() {
   settings.HealthColor = settings.HealthColorDay;
   settings.SunColor = settings.SunColorDay;
   settings.MoonColor = settings.MoonColorDay;
-  settings.BatteryColor = settings.BatteryColorDay;
+  settings.BatteryOutlineColor = settings.BatteryOutlineColorDay;
+  settings.BatteryChargingColor = settings.BatteryChargingColorDay;
+  settings.BatteryFullColor = settings.BatteryFullColorDay;
+  settings.BatteryMidColor = settings.BatteryMidColorDay;
+  settings.BatteryLowColor = settings.BatteryLowColorDay;
+  settings.BatteryMidPercent = 40;
+  settings.BatteryLowPercent = 20;
   settings.NightTheme = false;
   settings.ShowDate = false;
   settings.ShowDate2 = false;
@@ -246,7 +274,11 @@ static void prv_update_display() {
     settings.HealthColor = PBL_IF_COLOR_ELSE(settings.HealthColorNight, settings.TextColorNight);
     settings.SunColor = PBL_IF_COLOR_ELSE(settings.SunColorNight, settings.TextColorNight);
     settings.MoonColor = PBL_IF_COLOR_ELSE(settings.MoonColorNight, settings.TextColorNight);
-    settings.BatteryColor = PBL_IF_COLOR_ELSE(settings.BatteryColorNight, settings.TextColorNight);
+    settings.BatteryOutlineColor = PBL_IF_COLOR_ELSE(settings.BatteryOutlineColorNight, settings.TextColorNight);
+    settings.BatteryChargingColor = PBL_IF_COLOR_ELSE(settings.BatteryChargingColorNight, settings.TextColorNight);
+    settings.BatteryFullColor = PBL_IF_COLOR_ELSE(settings.BatteryFullColorNight, settings.TextColorNight);
+    settings.BatteryMidColor = PBL_IF_COLOR_ELSE(settings.BatteryMidColorNight, settings.TextColorNight);
+    settings.BatteryLowColor = PBL_IF_COLOR_ELSE(settings.BatteryLowColorNight, settings.TextColorNight);
   }
   else {
     settings.BacklightColor = settings.BacklightColorDay;
@@ -257,7 +289,11 @@ static void prv_update_display() {
     settings.HealthColor = PBL_IF_COLOR_ELSE(settings.HealthColorDay, settings.TextColorDay);
     settings.SunColor = PBL_IF_COLOR_ELSE(settings.SunColorDay, settings.TextColorDay);
     settings.MoonColor = PBL_IF_COLOR_ELSE(settings.MoonColorDay, settings.TextColorDay);
-    settings.BatteryColor = PBL_IF_COLOR_ELSE(settings.BatteryColorDay, settings.TextColorDay);
+    settings.BatteryOutlineColor = PBL_IF_COLOR_ELSE(settings.BatteryOutlineColorDay, settings.TextColorDay);
+    settings.BatteryChargingColor = PBL_IF_COLOR_ELSE(settings.BatteryChargingColorDay, settings.TextColorDay);
+    settings.BatteryFullColor = PBL_IF_COLOR_ELSE(settings.BatteryFullColorDay, settings.TextColorDay);
+    settings.BatteryMidColor = PBL_IF_COLOR_ELSE(settings.BatteryMidColorDay, settings.TextColorDay);
+    settings.BatteryLowColor = PBL_IF_COLOR_ELSE(settings.BatteryLowColorDay, settings.TextColorDay);
   }
 
   #if defined(PBL_RGB_BACKLIGHT)
@@ -518,17 +554,17 @@ static void battery_update_proc(Layer *layer, GContext *ctx, int battery_level) 
   int bar_width = ((battery_level * (bounds.size.w - 4)) / 100);
 
   // Draw the border using the text color
-  graphics_context_set_stroke_color(ctx, settings.BatteryColor);
+  graphics_context_set_stroke_color(ctx, settings.BatteryOutlineColor);
   graphics_draw_round_rect(ctx, bounds, 2);
 
   // Choose color based on battery level
   GColor bar_color;
-  if (battery_level <= 20) {
-    bar_color = PBL_IF_COLOR_ELSE(GColorRed, settings.BatteryColor);
-  } else if (battery_level <= 40) {
-    bar_color = PBL_IF_COLOR_ELSE(GColorChromeYellow, settings.BatteryColor);
+  if (battery_level <= settings.BatteryLowPercent) {
+    bar_color = settings.BatteryLowColor;
+  } else if (battery_level <= settings.BatteryMidPercent) {
+    bar_color = settings.BatteryMidColor;
   } else {
-    bar_color = PBL_IF_COLOR_ELSE(GColorGreen, settings.BatteryColor);
+    bar_color = settings.BatteryFullColor;
   }
 
   // Draw the filled bar inside the border
@@ -618,9 +654,25 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   if (moon_color_day_t) {
     settings.MoonColorDay = GColorFromHEX(moon_color_day_t->value->int32);
   }
-  Tuple *battery_color_day_t = dict_find(iterator, MESSAGE_KEY_BatteryColorDay);
-  if (battery_color_day_t) {
-    settings.BatteryColorDay = GColorFromHEX(battery_color_day_t->value->int32);
+  Tuple *battery_outline_color_day_t = dict_find(iterator, MESSAGE_KEY_BatteryOutlineColorDay);
+  if (battery_outline_color_day_t) {
+    settings.BatteryOutlineColorDay = GColorFromHEX(battery_outline_color_day_t->value->int32);
+  }
+  Tuple *battery_charging_color_day_t = dict_find(iterator, MESSAGE_KEY_BatteryChargingColorDay);
+  if (battery_charging_color_day_t) {
+    settings.BatteryChargingColorDay = GColorFromHEX(battery_charging_color_day_t->value->int32);
+  }
+  Tuple *battery_full_color_day_t = dict_find(iterator, MESSAGE_KEY_BatteryFullColorDay);
+  if (battery_full_color_day_t) {
+    settings.BatteryFullColorDay = GColorFromHEX(battery_full_color_day_t->value->int32);
+  }
+  Tuple *battery_mid_color_day_t = dict_find(iterator, MESSAGE_KEY_BatteryMidColorDay);
+  if (battery_mid_color_day_t) {
+    settings.BatteryMidColorDay = GColorFromHEX(battery_mid_color_day_t->value->int32);
+  }
+  Tuple *battery_low_color_day_t = dict_find(iterator, MESSAGE_KEY_BatteryLowColorDay);
+  if (battery_low_color_day_t) {
+    settings.BatteryLowColorDay = GColorFromHEX(battery_low_color_day_t->value->int32);
   }
   Tuple *bl_color_night_t = dict_find(iterator, MESSAGE_KEY_BacklightColorNight);
   if (bl_color_night_t) {
@@ -658,9 +710,25 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   if (moon_color_night_t) {
     settings.MoonColorNight = GColorFromHEX(moon_color_night_t->value->int32);
   }
-  Tuple *battery_color_night_t = dict_find(iterator, MESSAGE_KEY_BatteryColorNight);
-  if (battery_color_night_t) {
-    settings.BatteryColorNight = GColorFromHEX(battery_color_night_t->value->int32);
+  Tuple *battery_outline_color_night_t = dict_find(iterator, MESSAGE_KEY_BatteryOutlineColorNight);
+  if (battery_outline_color_night_t) {
+    settings.BatteryOutlineColorNight = GColorFromHEX(battery_outline_color_night_t->value->int32);
+  }
+  Tuple *battery_charging_color_night_t = dict_find(iterator, MESSAGE_KEY_BatteryChargingColorNight);
+  if (battery_charging_color_night_t) {
+    settings.BatteryChargingColorNight = GColorFromHEX(battery_charging_color_night_t->value->int32);
+  }
+  Tuple *battery_full_color_night_t = dict_find(iterator, MESSAGE_KEY_BatteryFullColorNight);
+  if (battery_full_color_night_t) {
+    settings.BatteryFullColorNight = GColorFromHEX(battery_full_color_night_t->value->int32);
+  }
+  Tuple *battery_mid_color_night_t = dict_find(iterator, MESSAGE_KEY_BatteryMidColorNight);
+  if (battery_mid_color_night_t) {
+    settings.BatteryMidColorNight = GColorFromHEX(battery_mid_color_night_t->value->int32);
+  }
+  Tuple *battery_low_color_night_t = dict_find(iterator, MESSAGE_KEY_BatteryLowColorNight);
+  if (battery_low_color_night_t) {
+    settings.BatteryLowColorNight = GColorFromHEX(battery_low_color_night_t->value->int32);
   }
   Tuple *night_theme_t = dict_find(iterator, MESSAGE_KEY_NightTheme);
   if (night_theme_t) {
@@ -715,6 +783,14 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   Tuple *show_phone_battery_t = dict_find(iterator, MESSAGE_KEY_ShowPhoneBattery);
   if (show_phone_battery_t) {
     settings.ShowPhoneBattery = show_phone_battery_t->value->int32 == 1;
+  }
+  Tuple *battery_mid_percent_t = dict_find(iterator, MESSAGE_KEY_BatteryMidPercent);
+  if (battery_mid_percent_t) {
+    settings.BatteryMidPercent = (int)battery_mid_percent_t->value->int32;
+  }
+  Tuple *battery_low_percent_t = dict_find(iterator, MESSAGE_KEY_BatteryLowPercent);
+  if (battery_low_percent_t) {
+    settings.BatteryLowPercent = (int)battery_low_percent_t->value->int32;
   }
   Tuple *periodic_vibrate_t = dict_find(iterator, MESSAGE_KEY_PeriodicVibrate);
   if (periodic_vibrate_t) {
@@ -795,11 +871,14 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     bg_color_day_t || bg_color_night_t || night_theme_t || 
     text_color_day_t || text_color_night_t || bl_color_day_t || bl_color_night_t ||
     time_color_day_t || date_color_day_t || weather_color_day_t || health_color_day_t || 
-    sun_color_day_t || moon_color_day_t || battery_color_day_t || 
+    sun_color_day_t || moon_color_day_t || battery_outline_color_day_t || battery_charging_color_day_t || 
+    battery_full_color_day_t || battery_mid_color_day_t || battery_low_color_day_t || 
     time_color_night_t || date_color_night_t || weather_color_night_t || health_color_night_t || 
-    sun_color_night_t || moon_color_night_t || battery_color_night_t || 
+    sun_color_night_t || moon_color_night_t || battery_outline_color_night_t || battery_charging_color_night_t || 
+    battery_full_color_night_t || battery_mid_color_night_t || battery_low_color_night_t || 
     show_date_t || show_date2_t || alt_date_t || show_steps_t || show_hr_t || 
     show_weather_t || temp_unit_t || weahter_interval_t || show_sun_t || show_moon_t || man_lat_t || man_lon_t || 
+    battery_mid_percent_t || battery_low_percent_t || 
     show_phone_battery_t || periodic_vibrate_t || periodic_sound_t || 
     bluetooth_vibrate_t || bluetooth_sound_t || volume_t) {
     
