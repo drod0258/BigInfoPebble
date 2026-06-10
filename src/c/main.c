@@ -973,26 +973,31 @@ static void main_window_load(Window *window) {
   int time_height;
   int date_padding;
   int date_height;
+  int weather_padding;
   s_info_font = fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD);
   info_padding = 10;
   info_height = 28;
   s_date_font = s_info_font;
   date_padding = info_padding;
   date_height = info_height;
-  s_bt_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_DRIPICONS_16));
-  s_weather_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_WEATHERICONS_18));
   #if defined(PBL_PLATFORM_EMERY) || defined(PBL_PLATFORM_GABBRO)
-    s_time_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_TALLBOLD_64));
+    s_time_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_TALLBOLD_70));
     time_padding = 2;
-    time_height = 64;
+    time_height = 72;
+    s_weather_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_WEATHERICONS_22));
+    s_bt_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_DRIPICONS_20));
+    weather_padding = 6;
   #else
     s_time_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_TALLBOLD_49));
     time_padding = 2;
     time_height = 49;
+    s_weather_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_WEATHERICONS_18));
+    s_bt_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_DRIPICONS_16));
+    weather_padding = 8;
   #endif
 
   // Position the time + date block
-  int date2_y = (bounds.size.h / 16) - date_padding;
+  int date2_y = 0;
   int date_y = date2_y;
   if (PBL_DISPLAY_HEIGHT >= 228) {
     date_y = date_y + date_height;
@@ -1056,7 +1061,7 @@ static void main_window_load(Window *window) {
   text_layer_set_text_alignment(s_weather_layer, GTextAlignmentRight);
 
   // Create weather icon TextLayer
-  int weather_icon_y = weather_y + (info_padding * 0.75);
+  int weather_icon_y = weather_y + weather_padding;
   int weather_icon_width = ((bounds.size.w / 10) * 2);
   int weather_icon_x = weather_width;
   s_weather_icon_layer = text_layer_create(
@@ -1096,7 +1101,7 @@ static void main_window_load(Window *window) {
   text_layer_set_text_alignment(s_sunset_layer, GTextAlignmentLeft);
 
   // Create the moon layer
-  int moon_y = sun_y + (info_padding * 0.85);
+  int moon_y = sun_y + weather_padding;
   //moon_y = 0;
   s_moon_layer = text_layer_create(
       GRect(((bounds.size.w / 5) * 2), moon_y, ((bounds.size.w / 5) * 1), (info_height + 4)));
