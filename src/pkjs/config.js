@@ -86,9 +86,37 @@ module.exports = [
       },
       {
         "type": "color",
-        "messageKey": "BatteryColorDay",
-        "label": "Battery Color",
+        "messageKey": "BatteryOutlineColorDay",
+        "label": "Battery Outline Color",
         "defaultValue": "0x000000",
+        "capabilities": ["COLOR"]
+      },
+      {
+        "type": "color",
+        "messageKey": "BatteryChargingColorDay",
+        "label": "Battery Charging Color",
+        "defaultValue": "0x0000FF",
+        "capabilities": ["COLOR"]
+      },
+      {
+        "type": "color",
+        "messageKey": "BatteryFullColorDay",
+        "label": "Battery Full Color",
+        "defaultValue": "0x00FF00",
+        "capabilities": ["COLOR"]
+      },
+      {
+        "type": "color",
+        "messageKey": "BatteryMidColorDay",
+        "label": "Battery Mid Color",
+        "defaultValue": "0xFFAA00",
+        "capabilities": ["COLOR"]
+      },
+      {
+        "type": "color",
+        "messageKey": "BatteryLowColorDay",
+        "label": "Battery Low Color",
+        "defaultValue": "0xFF0000",
         "capabilities": ["COLOR"]
       }
     ]
@@ -174,9 +202,37 @@ module.exports = [
       },
       {
         "type": "color",
-        "messageKey": "BatteryColorNight",
-        "label": "Night Battery Color",
+        "messageKey": "BatteryOutlineColorNight",
+        "label": "Night Battery Outline Color",
         "defaultValue": "0xFFFFFF",
+        "capabilities": ["COLOR"]
+      },
+      {
+        "type": "color",
+        "messageKey": "BatteryChargingColorNight",
+        "label": "Night Battery Charging Color",
+        "defaultValue": "0x0000FF",
+        "capabilities": ["COLOR"]
+      },
+      {
+        "type": "color",
+        "messageKey": "BatteryFullColorNight",
+        "label": "Night Battery Full Color",
+        "defaultValue": "0x00FF00",
+        "capabilities": ["COLOR"]
+      },
+      {
+        "type": "color",
+        "messageKey": "BatteryMidColorNight",
+        "label": "Night Battery Mid Color",
+        "defaultValue": "0xFFAA00",
+        "capabilities": ["COLOR"]
+      },
+      {
+        "type": "color",
+        "messageKey": "BatteryLowColorNight",
+        "label": "Night Battery Low Color",
+        "defaultValue": "0xFF0000",
         "capabilities": ["COLOR"]
       }
     ]
@@ -316,6 +372,33 @@ module.exports = [
         "messageKey": "ShowPhoneBattery",
         "label": "Show Phone Battery",
         "defaultValue": false
+      },
+      {
+        "type": "toggle",
+        "messageKey": "ShowCharging",
+        "label": "Show Battery Charging Color",
+        "defaultValue": false,
+        "capabilities": ["COLOR"]
+      },
+      {
+        "type": "slider",
+        "messageKey": "BatteryMidPercent",
+        "label": "Battery Mid Threshold",
+        "defaultValue": 40,
+        "min": 0,
+        "max": 100,
+        "step": 5,
+        "capabilities": ["COLOR"]
+      },
+      {
+        "type": "slider",
+        "messageKey": "BatteryLowPercent",
+        "label": "Battery Low Threshold",
+        "defaultValue": 20,
+        "min": 0,
+        "max": 100,
+        "step": 5,
+        "capabilities": ["COLOR"]
       },
       {
         "type": "text",
