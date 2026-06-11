@@ -1085,9 +1085,9 @@ static void main_window_load(Window *window) {
     s_bt_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_DRIPICONS_20));
     weather_padding = 6;
   #else
-    s_time_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_TALLBOLD_49));
+    s_time_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_TALLBOLD_50));
     time_padding = 2;
-    time_height = 49;
+    time_height = 50;
     s_weather_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_WEATHERICONS_18));
     s_bt_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_DRIPICONS_16));
     weather_padding = 8;

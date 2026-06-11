@@ -106,7 +106,7 @@
       "media": [
         {
           "type": "font",
-          "name": "FONT_TALLBOLD_49",
+          "name": "FONT_TALLBOLD_50",
           "file": "fonts/tallbolder.ttf",
           "characterRegex": "[0-9: ]"
         },
