@@ -79,6 +79,12 @@ typedef struct ClaySettings {
   int WeatherIcon;
   int PhoneBattery;
   bool PhoneCharging;
+  bool requestSun;
+  bool requestWeather;
+  bool requestBattery;
+  bool unsibscribeBattery;
+  bool updateCoordinates;
+  bool requestJS;
 } ClaySettings;
 
 // An instance of the struct
@@ -186,6 +192,12 @@ static void prv_default_settings() {
   settings.WeatherIcon=15;
   settings.PhoneBattery=0;
   settings.PhoneCharging=false;
+  settings.requestSun=false;
+  settings.requestWeather=false;
+  settings.requestBattery=false;
+  settings.unsibscribeBattery=false;
+  settings.updateCoordinates=false;
+  settings.requestJS=false;
 }
 
 static char* weather_conditions[] = {
@@ -498,6 +510,41 @@ int parse_coordinates(char *coor_str) {
   }
 }
 
+static void request_js() {
+  DictionaryIterator *iter;
+  app_message_outbox_begin(&iter);
+  if (settings.requestSun) {
+    dict_write_uint8(iter, MESSAGE_KEY_REQUEST_SUN, 1);
+    settings.requestSun = false;
+  }
+  if (settings.requestWeather) {
+    dict_write_uint8(iter, MESSAGE_KEY_REQUEST_WEATHER, 1);
+    settings.requestWeather = false;
+  }
+  if (settings.requestBattery) {
+    dict_write_uint8(iter, MESSAGE_KEY_REQUEST_BATTERY, 1);
+    settings.requestBattery = false;
+  }
+  if (settings.unsibscribeBattery) {
+    dict_write_uint8(iter, MESSAGE_KEY_UNSUBSCRIBE_BATTERY, 1);
+    settings.unsibscribeBattery = false;
+  }
+  if (settings.updateCoordinates) {
+    // Send scaled int if coordinates are set, otherwise send empty string
+    if (settings.ManualCoordinates) {
+      dict_write_int32(iter, MESSAGE_KEY_Latitude, settings.Latitude);
+      dict_write_int32(iter, MESSAGE_KEY_Longitude, settings.Longitude);
+    } else {
+      dict_write_cstring(iter, MESSAGE_KEY_Latitude, "");
+      dict_write_cstring(iter, MESSAGE_KEY_Longitude, "");
+    }
+    settings.updateCoordinates = false;
+  }
+  settings.requestJS=false;
+  app_message_outbox_send();
+  prv_save_settings();
+}
+
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   // run every minute
   update_time();
@@ -522,26 +569,22 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
     #endif
     // generate message request only if showing info and time matches interval
     if (settings.ShowWeather || settings.ShowSun || settings.ShowMoon || settings.NightTheme) {
-      bool requestWeather = false;
-      bool requestSun = false;
       // Get weather update every 1-6 hours
       if (settings.ShowWeather && tick_time->tm_hour % settings.WeatherInterval == 0) {
-        requestWeather = true;
+        settings.requestWeather = true;
       }
       // Get sun & moon info every 24 hours
       if ((settings.ShowSun || settings.ShowMoon || settings.NightTheme) && tick_time->tm_hour % 24 == 0) {
-        requestSun = true;
+        settings.requestSun = true;
       }
-      if (requestWeather || requestSun) {
-        DictionaryIterator *iter;
-        app_message_outbox_begin(&iter);
-        if (requestSun) {
-          dict_write_uint8(iter, MESSAGE_KEY_REQUEST_SUN, 1);
+      if (settings.requestWeather || settings.requestSun) {
+        // request data only if currently connected to phone
+        if (connection_service_peek_pebble_app_connection()) {
+          request_js();
+        } else {
+          settings.requestJS=true;
+          prv_save_settings();
         }
-        if (requestWeather) {
-          dict_write_uint8(iter, MESSAGE_KEY_REQUEST_WEATHER, 1);
-        }
-        app_message_outbox_send();
       }
     }
   }
@@ -593,6 +636,7 @@ static void bluetooth_callback(bool connected) {
   layer_set_hidden(text_layer_get_layer(s_moon_layer), !connected || !settings.ShowMoon);
   layer_set_hidden(text_layer_get_layer(s_bt_icon_layer), connected);
   if (!connected) {
+    //phone was disconnected
     if (settings.BluetoothVibrate) {
       vibes_long_pulse();
     }
@@ -607,6 +651,11 @@ static void bluetooth_callback(bool connected) {
         speaker_play_notes(s_double_beep_sawtooth, ARRAY_LENGTH(s_double_beep_sawtooth), settings.Volume);
       }
     #endif
+  } else {
+    //phone was connected
+    if (settings.requestJS) {
+      request_js();
+    }
   }
 }
 
@@ -953,40 +1002,16 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     prv_update_display();
 
     // Request data when a setting was changed
-    bool updateCoordinates = (prev_Lat != settings.Latitude) || (prev_Lon != settings.Longitude);
-    bool requestSun = (!prev_ShowSun && settings.ShowSun) ||
+    settings.updateCoordinates = (prev_Lat != settings.Latitude) || (prev_Lon != settings.Longitude);
+    settings.requestSun = (!prev_ShowSun && settings.ShowSun) ||
                    (!prev_ShowMoon && settings.ShowMoon) ||
                    (!prev_NightTheme && settings.NightTheme) ||
-                   (updateCoordinates && (settings.ShowSun || settings.ShowMoon || settings.NightTheme));
-    bool requestWeather = ((prev_TemperatureUnit != settings.TemperatureUnit) || !prev_ShowWeather || updateCoordinates) && settings.ShowWeather;
-    bool requestBattery = (!prev_ShowPhoneBattery && settings.ShowPhoneBattery);
-    bool unsibscribeBattery = (prev_ShowPhoneBattery && !settings.ShowPhoneBattery);
-    if (requestSun || requestWeather || requestBattery || unsibscribeBattery || updateCoordinates) {
-      DictionaryIterator *iter;
-      app_message_outbox_begin(&iter);
-      if (requestSun) {
-        dict_write_uint8(iter, MESSAGE_KEY_REQUEST_SUN, 1);
-      }
-      if (requestWeather) {
-        dict_write_uint8(iter, MESSAGE_KEY_REQUEST_WEATHER, 1);
-      }
-      if (requestBattery) {
-        dict_write_uint8(iter, MESSAGE_KEY_REQUEST_BATTERY, 1);
-      }
-      if (unsibscribeBattery) {
-        dict_write_uint8(iter, MESSAGE_KEY_UNSUBSCRIBE_BATTERY, 1);
-      }
-      if (updateCoordinates) {
-        // Send scaled int if coordinates are set, otherwise send empty string
-        if (settings.ManualCoordinates) {
-          dict_write_int32(iter, MESSAGE_KEY_Latitude, settings.Latitude);
-          dict_write_int32(iter, MESSAGE_KEY_Longitude, settings.Longitude);
-        } else {
-          dict_write_cstring(iter, MESSAGE_KEY_Latitude, "");
-          dict_write_cstring(iter, MESSAGE_KEY_Longitude, "");
-        }
-      }
-      app_message_outbox_send();
+                   (settings.updateCoordinates && (settings.ShowSun || settings.ShowMoon || settings.NightTheme));
+    settings.requestWeather = ((prev_TemperatureUnit != settings.TemperatureUnit) || !prev_ShowWeather || settings.updateCoordinates) && settings.ShowWeather;
+    settings.requestBattery = (!prev_ShowPhoneBattery && settings.ShowPhoneBattery);
+    settings.unsibscribeBattery = (prev_ShowPhoneBattery && !settings.ShowPhoneBattery);
+    if (settings.requestSun || settings.requestWeather || settings.requestBattery || settings.unsibscribeBattery || settings.updateCoordinates) {
+      request_js();
     }
   } else if (temp_tuple || conditions_tuple || sunrise_tuple || sunset_tuple || moon_tuple || battery_tuple || charging_tuple) {
     prv_save_settings();
