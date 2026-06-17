@@ -376,7 +376,14 @@ static void update_time() {
   static char s_time_buffer[8];
   strftime(s_time_buffer, sizeof(s_time_buffer), clock_is_24h_style() ?
                                                     "%H:%M" : "%l:%M", tick_time);
-  text_layer_set_text(s_time_layer, s_time_buffer);
+  // "%l" blank-pads single-digit hours (e.g. " 9:00"). With center alignment the
+  // leading space gets counted, pushing the visible digits off-center. Skip it so
+  // the time stays centered whether the hour has one or two digits.
+  char *time_text = s_time_buffer;
+  if (time_text[0] == ' ') {
+    time_text++;
+  }
+  text_layer_set_text(s_time_layer, time_text);
 }
 
 static void update_date() {
