@@ -100,7 +100,8 @@
       "BatteryLowPercent",
       "ShowCharging",
       "Latitude",
-      "Longitude"
+      "Longitude",
+      "JSReady"
     ],
     "resources": {
       "media": [

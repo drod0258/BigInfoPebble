@@ -389,6 +389,7 @@ function getSunInfo() {
 Pebble.addEventListener('ready',
   function(e) {
     console.log('PebbleKit JS ready!');
+    Pebble.sendAppMessage({'JSReady': 1}); // Update s_js_ready on watch
     // Get the initial data
     //getSunInfo();
     //getWeatherInfo();

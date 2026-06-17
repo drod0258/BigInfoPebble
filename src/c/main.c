@@ -89,6 +89,7 @@ typedef struct ClaySettings {
 
 // An instance of the struct
 static ClaySettings settings;
+static bool s_js_ready;
 
 static Window *s_main_window;
 static TextLayer *s_time_layer;
@@ -542,7 +543,6 @@ static void request_js() {
   }
   settings.requestJS=false;
   app_message_outbox_send();
-  prv_save_settings();
 }
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
@@ -651,11 +651,6 @@ static void bluetooth_callback(bool connected) {
         speaker_play_notes(s_double_beep_sawtooth, ARRAY_LENGTH(s_double_beep_sawtooth), settings.Volume);
       }
     #endif
-  } else {
-    //phone was connected
-    if (settings.requestJS) {
-      request_js();
-    }
   }
 }
 
@@ -673,6 +668,12 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   bool prev_AltDate = settings.AltDate;
   int prev_Lat = settings.Latitude;
   int prev_Lon = settings.Longitude;
+
+  Tuple *js_ready_t = dict_find(iterator, MESSAGE_KEY_JSReady);
+  if(js_ready_t) {
+    // PebbleKit JS is ready! Safe to send messages
+    s_js_ready = true;
+  }
 
   // Check for Clay settings data
   Tuple *bl_color_day_t = dict_find(iterator, MESSAGE_KEY_BacklightColorDay);
@@ -947,7 +948,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     show_weather_t || temp_unit_t || weahter_interval_t || show_sun_t || show_moon_t || man_lat_t || man_lon_t || 
     show_charging_t || battery_mid_percent_t || battery_low_percent_t || 
     show_phone_battery_t || periodic_vibrate_t || periodic_sound_t || 
-    bluetooth_vibrate_t || bluetooth_sound_t || volume_t) {
+    bluetooth_vibrate_t || bluetooth_sound_t || volume_t || js_ready_t) {
     
     // if show battery was toggled
     if (prev_ShowPhoneBattery != settings.ShowPhoneBattery) {
@@ -1002,12 +1003,15 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     prv_update_display();
 
     // Request data when a setting was changed
-    settings.updateCoordinates = (prev_Lat != settings.Latitude) || (prev_Lon != settings.Longitude);
-    settings.requestSun = (!prev_ShowSun && settings.ShowSun) ||
-                   (!prev_ShowMoon && settings.ShowMoon) ||
-                   (!prev_NightTheme && settings.NightTheme) ||
-                   (settings.updateCoordinates && (settings.ShowSun || settings.ShowMoon || settings.NightTheme));
-    settings.requestWeather = ((prev_TemperatureUnit != settings.TemperatureUnit) || !prev_ShowWeather || settings.updateCoordinates) && settings.ShowWeather;
+    settings.updateCoordinates = (prev_Lat != settings.Latitude) ||
+                                 (prev_Lon != settings.Longitude);
+    settings.requestSun = settings.requestSun || 
+                          (!prev_ShowSun && settings.ShowSun) ||
+                          (!prev_ShowMoon && settings.ShowMoon) ||
+                          (!prev_NightTheme && settings.NightTheme) ||
+                          (settings.updateCoordinates && (settings.ShowSun || settings.ShowMoon || settings.NightTheme));
+    settings.requestWeather = settings.requestWeather || 
+                              (((prev_TemperatureUnit != settings.TemperatureUnit) || !prev_ShowWeather || settings.updateCoordinates) && settings.ShowWeather);
     settings.requestBattery = (!prev_ShowPhoneBattery && settings.ShowPhoneBattery);
     settings.unsibscribeBattery = (prev_ShowPhoneBattery && !settings.ShowPhoneBattery);
     if (settings.requestSun || settings.requestWeather || settings.requestBattery || settings.unsibscribeBattery || settings.updateCoordinates) {
@@ -1334,7 +1338,7 @@ static void init() {
 
   // Open AppMessage
   const int inbox_size = 512;
-  const int outbox_size = 128;
+  const int outbox_size = 256;
   app_message_open(inbox_size, outbox_size);
 }
 
