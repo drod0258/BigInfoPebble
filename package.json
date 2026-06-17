@@ -101,7 +101,9 @@
       "ShowCharging",
       "Latitude",
       "Longitude",
-      "JSReady"
+      "JSReady",
+      "DateFormat",
+      "CustomDate"
     ],
     "resources": {
       "media": [
