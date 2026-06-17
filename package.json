@@ -1,7 +1,7 @@
 {
   "name": "BigInfo",
   "author": "drod",
-  "version": "2.1.2",
+  "version": "2.2.0",
   "keywords": [
     "weather",
     "moon",
@@ -100,7 +100,8 @@
       "BatteryLowPercent",
       "ShowCharging",
       "Latitude",
-      "Longitude"
+      "Longitude",
+      "JSReady"
     ],
     "resources": {
       "media": [
