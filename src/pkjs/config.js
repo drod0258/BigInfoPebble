@@ -259,11 +259,26 @@ module.exports = [
         "capabilities": ["NOT_DISPLAY_144x168"]
       },
       {
-        "type": "toggle",
-        "messageKey": "AltDate",
-        "label": "Alternate Date Format",
-        "description": "Toggle between `Day Mon DD` and `YYYY-MM-DD`",
-        "defaultValue": false
+        "type": "select",
+        "messageKey": "DateFormat",
+        "label": "Date Format",
+        "defaultValue": 0,
+        "options": [
+          { "label": "Day Mon DD  (Sat Jun 07)", "value": 0 },
+          { "label": "YYYY-MM-DD  (2026-06-07)", "value": 1 },
+          { "label": "Day DD Mon  (Sat 07 Jun)", "value": 2 },
+          { "label": "Custom", "value": 3 }
+        ]
+      },
+      {
+        "type": "input",
+        "messageKey": "CustomDate",
+        "label": "Custom Date Format",
+        "defaultValue": "%a %d %b",
+        "description": "Only used when Date Format is set to `Custom`. Uses strftime tokens — e.g. `%a`=Sat, `%A`=Saturday, `%d`=07, `%b`=Jun, `%B`=June, `%m`=06, `%Y`=2026.",
+        "attributes": {
+          "placeholder": "%a %d %b"
+        }
       }
     ]
   },

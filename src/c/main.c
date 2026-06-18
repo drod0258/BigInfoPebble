@@ -3,6 +3,15 @@
 // Persistent storage key
 #define SETTINGS_KEY 1
 
+// Date format options (DateFormat setting)
+enum {
+  DATE_FORMAT_DEFAULT = 0, // Day Mon DD  (e.g. Sat Jun 07)
+  DATE_FORMAT_ISO     = 1, // YYYY-MM-DD  (e.g. 2026-06-07)
+  DATE_FORMAT_DMY     = 2, // Day DD Mon  (e.g. Sat 07 Jun)
+  DATE_FORMAT_CUSTOM  = 3, // user-supplied strftime pattern (CustomDate)
+};
+#define DATE_FORMAT_UNSET -1
+
 // Define our settings struct
 typedef struct ClaySettings {
   // user settings
@@ -85,6 +94,10 @@ typedef struct ClaySettings {
   bool unsibscribeBattery;
   bool updateCoordinates;
   bool requestJS;
+  // Date format — appended to the end of the struct so older persisted
+  // settings (saved before these fields existed) load without corruption.
+  int DateFormat;
+  char CustomDate[24];
 } ClaySettings;
 
 // An instance of the struct
@@ -170,6 +183,8 @@ static void prv_default_settings() {
   settings.ShowDate = false;
   settings.ShowDate2 = false;
   settings.AltDate = false;
+  settings.DateFormat = DATE_FORMAT_UNSET;
+  strncpy(settings.CustomDate, "%a %d %b", sizeof(settings.CustomDate));
   settings.ShowWeather = false;
   settings.TemperatureUnit = false;
   settings.WeatherInterval = 3;
@@ -279,6 +294,13 @@ static void prv_load_settings() {
   prv_default_settings();
   // Then override with any saved values
   persist_read_data(SETTINGS_KEY, &settings, sizeof(settings));
+
+  // Migrate the legacy AltDate toggle to the DateFormat setting. Settings saved
+  // before DateFormat existed leave it at DATE_FORMAT_UNSET, so derive the value
+  // from AltDate once to preserve the user's previous choice.
+  if (settings.DateFormat == DATE_FORMAT_UNSET) {
+    settings.DateFormat = settings.AltDate ? DATE_FORMAT_ISO : DATE_FORMAT_DEFAULT;
+  }
 }
 
 // Apply settings to UI elements
@@ -383,15 +405,36 @@ static void update_date() {
   time_t now = time(NULL);
   struct tm *tick_time = localtime(&now);
 
-  static char s_date_buffer[16];
-  static char s_date2_buffer[16];
-  if (settings.AltDate) {
-    strftime(s_date_buffer, sizeof(s_date_buffer), "%Y-%m-%d", tick_time);
-    strftime(s_date2_buffer, sizeof(s_date2_buffer), "%A", tick_time);
-  } else {
-    strftime(s_date_buffer, sizeof(s_date_buffer), "%a %b %d", tick_time);
-    strftime(s_date2_buffer, sizeof(s_date2_buffer), "%Y", tick_time);
+  static char s_date_buffer[32];
+  static char s_date2_buffer[32];
+
+  // Primary line is the chosen format; the additional date line (s_date2,
+  // shown only on tall displays) pairs the weekday with ISO and the year
+  // with every other format.
+  const char *primary_format;
+  const char *secondary_format;
+  switch (settings.DateFormat) {
+    case DATE_FORMAT_ISO:
+      primary_format = "%Y-%m-%d";
+      secondary_format = "%A";
+      break;
+    case DATE_FORMAT_DMY:
+      primary_format = "%a %d %b";
+      secondary_format = "%Y";
+      break;
+    case DATE_FORMAT_CUSTOM:
+      primary_format = (settings.CustomDate[0] != '\0') ? settings.CustomDate : "%a %b %d";
+      secondary_format = "%Y";
+      break;
+    case DATE_FORMAT_DEFAULT:
+    default:
+      primary_format = "%a %b %d";
+      secondary_format = "%Y";
+      break;
   }
+
+  strftime(s_date_buffer, sizeof(s_date_buffer), primary_format, tick_time);
+  strftime(s_date2_buffer, sizeof(s_date2_buffer), secondary_format, tick_time);
   text_layer_set_text(s_date_layer, s_date_buffer);
   text_layer_set_text(s_date2_layer, s_date2_buffer);
 }
@@ -804,7 +847,22 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   if (alt_date_t) {
     settings.AltDate = alt_date_t->value->int32 == 1;
   }
-  if (prev_AltDate != settings.AltDate) {
+  Tuple *date_format_t = dict_find(iterator, MESSAGE_KEY_DateFormat);
+  if (date_format_t) {
+    // Clay's select component sends its value as a string (e.g. "2"), so accept
+    // either a string or a raw integer.
+    if (date_format_t->type == TUPLE_CSTRING) {
+      settings.DateFormat = atoi(date_format_t->value->cstring);
+    } else {
+      settings.DateFormat = (int)date_format_t->value->int32;
+    }
+  }
+  Tuple *custom_date_t = dict_find(iterator, MESSAGE_KEY_CustomDate);
+  if (custom_date_t) {
+    strncpy(settings.CustomDate, custom_date_t->value->cstring, sizeof(settings.CustomDate) - 1);
+    settings.CustomDate[sizeof(settings.CustomDate) - 1] = '\0';
+  }
+  if (date_format_t || custom_date_t || (prev_AltDate != settings.AltDate)) {
     update_date();
   }
   Tuple *show_weather_t = dict_find(iterator, MESSAGE_KEY_ShowWeather);
@@ -944,7 +1002,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     time_color_night_t || date_color_night_t || weather_color_night_t || health_color_night_t || 
     sun_color_night_t || moon_color_night_t || battery_outline_color_night_t || battery_charging_color_night_t || 
     battery_full_color_night_t || battery_mid_color_night_t || battery_low_color_night_t || 
-    show_date_t || show_date2_t || alt_date_t || show_steps_t || show_hr_t || 
+    show_date_t || show_date2_t || alt_date_t || date_format_t || custom_date_t || show_steps_t || show_hr_t ||
     show_weather_t || temp_unit_t || weahter_interval_t || show_sun_t || show_moon_t || man_lat_t || man_lon_t || 
     show_charging_t || battery_mid_percent_t || battery_low_percent_t || 
     show_phone_battery_t || periodic_vibrate_t || periodic_sound_t || 
@@ -1349,8 +1407,9 @@ static void init() {
   app_message_register_outbox_failed(outbox_failed_callback);
   app_message_register_outbox_sent(outbox_sent_callback);
 
-  // Open AppMessage
-  const int inbox_size = 512;
+  // Open AppMessage. The inbox must hold the full Clay settings payload, which
+  // grew past the previous 512-byte buffer once the date format string was added.
+  const int inbox_size = 2048;
   const int outbox_size = 256;
   app_message_open(inbox_size, outbox_size);
 }
