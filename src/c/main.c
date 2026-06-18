@@ -968,29 +968,29 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     if (
     ((prev_ShowSteps != settings.ShowSteps) || (prev_ShowHR != settings.ShowHR)) &&
     ((prev_ShowSteps && prev_ShowHR) != (settings.ShowSteps && settings.ShowHR)) &&
-    (PBL_DISPLAY_HEIGHT >= 228) ) {
+    (PBL_DISPLAY_HEIGHT == 228) ) {
       int bar_offset = (PBL_DISPLAY_HEIGHT / 6);
       int bar_y = PBL_IF_ROUND_ELSE(PBL_DISPLAY_HEIGHT - (bar_offset + (PBL_DISPLAY_HEIGHT / 3.75)), PBL_DISPLAY_HEIGHT - (bar_offset - (PBL_DISPLAY_HEIGHT / 12)));
       int info_height = 28;
-      int info_padding = 10;
+      int weather_padding = 6;
       // weather
       int weather_x = 0;
       int weather_y = PBL_IF_ROUND_ELSE(bar_y + (15), bar_y - (info_height * 2) - (PBL_DISPLAY_HEIGHT / 15));
-      int weather_width = ((PBL_DISPLAY_WIDTH / 10) * 4);
+      int weather_width = (PBL_DISPLAY_WIDTH * 0.40);
+      int weather_icon_width = (PBL_DISPLAY_WIDTH * 0.20);
+      int health_width = weather_width;
       if (settings.ShowSteps && settings.ShowHR) {
         weather_width = (weather_width * 0.75);
+        health_width = (health_width * 1.25);
+      } else if (!settings.ShowSteps || !settings.ShowHR) {
+        weather_width = (PBL_DISPLAY_WIDTH * 0.36);
+        weather_icon_width = (PBL_DISPLAY_WIDTH * 0.28);
+        health_width = weather_width;
       }
-      // weather icon
       int weather_icon_x = weather_width;
-      int weather_icon_y = weather_y + (info_padding * 0.75);
-      int weather_icon_width = ((PBL_DISPLAY_WIDTH / 10) * 2);
-      // health
+      int weather_icon_y = weather_y + weather_padding;
       int health_x = weather_icon_x + weather_icon_width;
       int health_y = weather_y;
-      int health_width = ((PBL_DISPLAY_WIDTH / 10) * 4);
-      if (settings.ShowSteps && settings.ShowHR) {
-        health_width = (health_width * 1.25);
-      }
       layer_set_frame(text_layer_get_layer(s_weather_layer), GRect(weather_x, weather_y, weather_width, (info_height + 4)));
       layer_mark_dirty(text_layer_get_layer(s_weather_layer));
       layer_set_frame(text_layer_get_layer(s_weather_icon_layer), GRect(weather_icon_x, weather_icon_y, weather_icon_width, (info_height + 4)));
@@ -1172,13 +1172,26 @@ static void main_window_load(Window *window) {
   s_phone_battery_layer = layer_create(GRect(phone_bar_x, phone_bar_y, phone_bar_width, bar_height));
   layer_set_update_proc(s_phone_battery_layer, phone_battery_update_proc);
 
-  // Create weather TextLayer
-  int weather_y = PBL_IF_ROUND_ELSE(bar_y + (bar_height * 1.4), bar_y - (info_height * 2) - (bounds.size.h / 15));
-  int weather_width = ((bounds.size.w / 10) * 4);
+  // Position the weather and health blocks
   int weather_x = 0;
-  if ((settings.ShowSteps && settings.ShowHR) && (PBL_DISPLAY_HEIGHT >= 228)) {
+  int weather_y = PBL_IF_ROUND_ELSE(bar_y + (bar_height * 1.4), bar_y - (info_height * 2) - (bounds.size.h / 15));
+  int weather_width = (bounds.size.w * 0.40);
+  int weather_icon_width = (bounds.size.w * 0.20);
+  int health_width = weather_width;
+  if ((settings.ShowSteps && settings.ShowHR) && (PBL_DISPLAY_HEIGHT == 228)) {
     weather_width = (weather_width * 0.75);
+    health_width = (health_width * 1.25);
+  } else if ((!settings.ShowSteps || !settings.ShowHR) && (PBL_DISPLAY_HEIGHT == 228)) {
+    weather_width = (bounds.size.w * 0.36);
+    weather_icon_width = (bounds.size.w * 0.28);
+    health_width = weather_width;
   }
+  int weather_icon_x = weather_width;
+  int weather_icon_y = weather_y + weather_padding;
+  int health_x = weather_icon_x + weather_icon_width;
+  int health_y = weather_y;
+
+  // Create weather TextLayer
   s_weather_layer = text_layer_create(
       GRect(weather_x, weather_y, weather_width, (info_height + 4)));
   text_layer_set_background_color(s_weather_layer, GColorClear);
@@ -1187,9 +1200,6 @@ static void main_window_load(Window *window) {
   text_layer_set_text_alignment(s_weather_layer, GTextAlignmentRight);
 
   // Create weather icon TextLayer
-  int weather_icon_y = weather_y + weather_padding;
-  int weather_icon_width = ((bounds.size.w / 10) * 2);
-  int weather_icon_x = weather_width;
   s_weather_icon_layer = text_layer_create(
       GRect(weather_icon_x, weather_icon_y, weather_icon_width, (info_height + 4)));
   text_layer_set_background_color(s_weather_icon_layer, GColorClear);
@@ -1198,12 +1208,6 @@ static void main_window_load(Window *window) {
   text_layer_set_text_alignment(s_weather_icon_layer, GTextAlignmentCenter);
 
   // Create health TextLayer
-  int health_y = weather_y;
-  int health_width = ((bounds.size.w / 10) * 4);
-  int health_x = weather_icon_x + weather_icon_width;
-  if ((settings.ShowSteps && settings.ShowHR) && (PBL_DISPLAY_HEIGHT >= 228)) {
-    health_width = (health_width * 1.25);
-  }
   s_health_layer = text_layer_create(
       GRect(health_x, health_y, health_width, (info_height + 4)));
   text_layer_set_background_color(s_health_layer, GColorClear);
@@ -1211,26 +1215,35 @@ static void main_window_load(Window *window) {
   text_layer_set_font(s_health_layer, s_info_font);
   text_layer_set_text_alignment(s_health_layer, GTextAlignmentLeft);
 
-  // Create sun TextLayer
+  // Position the sun and moon blocks
+  int sun_x = 0;
   int sun_y = weather_y + info_height;
+  int sun_width = (bounds.size.w * 0.40);
+  int moon_y = sun_y + weather_padding;
+  int moon_width = (bounds.size.w * 0.20);
+  if (PBL_DISPLAY_HEIGHT == 228) {
+    sun_width = (bounds.size.w * 0.36);
+    moon_width = (bounds.size.w * 0.28);
+  }
+  int moon_x = sun_width;
+
+  // Create sun TextLayer
   s_sunrise_layer = text_layer_create(
-      GRect(0, sun_y, ((bounds.size.w / 5) * 2), (info_height + 4)));
+      GRect(sun_x, sun_y, sun_width, (info_height + 4)));
   text_layer_set_background_color(s_sunrise_layer, GColorClear);
   text_layer_set_text_color(s_sunrise_layer, settings.SunColor);
   text_layer_set_font(s_sunrise_layer, s_info_font);
   text_layer_set_text_alignment(s_sunrise_layer, GTextAlignmentRight);
   s_sunset_layer = text_layer_create(
-      GRect(((bounds.size.w / 5) * 3), sun_y, ((bounds.size.w / 5) * 2), (info_height + 4)));
+      GRect((sun_width + moon_width), sun_y, sun_width, (info_height + 4)));
   text_layer_set_background_color(s_sunset_layer, GColorClear);
   text_layer_set_text_color(s_sunset_layer, settings.SunColor);
   text_layer_set_font(s_sunset_layer, s_info_font);
   text_layer_set_text_alignment(s_sunset_layer, GTextAlignmentLeft);
 
   // Create the moon layer
-  int moon_y = sun_y + weather_padding;
-  //moon_y = 0;
   s_moon_layer = text_layer_create(
-      GRect(((bounds.size.w / 5) * 2), moon_y, ((bounds.size.w / 5) * 1), (info_height + 4)));
+      GRect(moon_x, moon_y, moon_width, (info_height + 4)));
   text_layer_set_background_color(s_moon_layer, GColorClear);
   text_layer_set_text_color(s_moon_layer, settings.MoonColor);
   text_layer_set_font(s_moon_layer, s_weather_font);
