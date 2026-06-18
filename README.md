@@ -34,15 +34,18 @@ Download on the Pebble store: https://apps.repebble.com/5eda31d774a34edeb1c87a39
 
 ## Screenshots
 
-![screenshot-flint-0](screenshots/pebble_screenshot_2026-04-29_13-37.png)
-![screenshot-flint-1](screenshots/pebble_screenshot_2026-04-27_07-24.png)
-![screenshot-flint-2](screenshots/pebble_screenshot_2026-04-29_13-45.png)
-![screenshot-flint-3](screenshots/pebble_screenshot_2026-04-21_13-15-46.png)
+![screenshot-flint-0](screenshots/flint-01.png)
+![screenshot-flint-1](screenshots/flint-02.png)
+![screenshot-flint-2](screenshots/flint-03.png)
+![screenshot-flint-3](screenshots/flint-04.png)
 
-![screenshot-emery-0](screenshots/pebble_screenshot_2026-04-29_06-23-32.png)
-![screenshot-emery-1](screenshots/pebble_screenshot_2026-04-29_14-08-19.png)
-![screenshot-emery-2](screenshots/pebble_screenshot_2026-04-29_21-43-30.png)
+![screenshot-emery-0](screenshots/emery-01.png)
+![screenshot-emery-1](screenshots/emery-02.png)
+![screenshot-emery-2](screenshots/emery-03.png)
+![screenshot-emery-3](screenshots/emery-04.png)
+![screenshot-emery-4](screenshots/emery-05.png)
 
-![screenshot-gabbro-0](screenshots/pebble_screenshot_2026-05-18_10-52-37.png)
-![screenshot-gabbro-1](screenshots/pebble_screenshot_2026-05-18_10-55-36.png)
-![screenshot-gabbro-2](screenshots/pebble_screenshot_2026-05-18_10-57-13.png)
+![screenshot-gabbro-0](screenshots/gabbro-01.png)
+![screenshot-gabbro-1](screenshots/gabbro-02.png)
+![screenshot-gabbro-2](screenshots/gabbro-03.png)
+![screenshot-gabbro-3](screenshots/gabbro-04.png)
