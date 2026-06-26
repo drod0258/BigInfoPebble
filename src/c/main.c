@@ -61,6 +61,7 @@ typedef struct ClaySettings {
   bool ShowHR;
   bool ShowSun;
   bool ShowMoon;
+  bool ShowWatchBattery;
   bool ShowPhoneBattery;
   bool PeriodicVibrate;
   bool PeriodicSound;
@@ -178,6 +179,7 @@ static void prv_default_settings() {
   settings.ShowHR = false;
   settings.ShowSun = false;
   settings.ShowMoon = false;
+  settings.ShowWatchBattery = true;
   settings.ShowPhoneBattery = false;
   settings.PeriodicVibrate = false;
   settings.PeriodicSound = false;
@@ -349,6 +351,7 @@ static void prv_update_display() {
   layer_set_hidden(text_layer_get_layer(s_sunrise_layer), !settings.ShowSun);
   layer_set_hidden(text_layer_get_layer(s_sunset_layer), !settings.ShowSun);
   layer_set_hidden(text_layer_get_layer(s_moon_layer), !settings.ShowMoon);
+  layer_set_hidden(s_battery_layer, !settings.ShowWatchBattery);
   layer_set_hidden(s_phone_battery_layer, !settings.ShowPhoneBattery);
 
   // Mark battery layer for redraw (color may have changed)
@@ -673,6 +676,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   bool prev_NightTheme = settings.NightTheme;
   bool prev_ShowWeather = settings.ShowWeather;
   bool prev_TemperatureUnit = settings.TemperatureUnit;
+  bool prev_ShowWatchBattery = settings.ShowWatchBattery;
   bool prev_ShowPhoneBattery = settings.ShowPhoneBattery;
   bool prev_AltDate = settings.AltDate;
   int prev_Lat = settings.Latitude;
@@ -847,6 +851,10 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   if (show_moon_t) {
     settings.ShowMoon = show_moon_t->value->int32 == 1;
   }
+  Tuple *show_watch_battery_t = dict_find(iterator, MESSAGE_KEY_ShowWatchBattery);
+  if (show_watch_battery_t) {
+    settings.ShowWatchBattery = show_watch_battery_t->value->int32 == 1;
+  }
   Tuple *show_phone_battery_t = dict_find(iterator, MESSAGE_KEY_ShowPhoneBattery);
   if (show_phone_battery_t) {
     settings.ShowPhoneBattery = show_phone_battery_t->value->int32 == 1;
@@ -960,21 +968,31 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     show_date_t || show_date2_t || alt_date_t || show_steps_t || show_hr_t || 
     show_weather_t || temp_unit_t || weahter_interval_t || show_sun_t || show_moon_t || man_lat_t || man_lon_t || 
     show_charging_t || battery_mid_percent_t || battery_low_percent_t || 
-    show_phone_battery_t || periodic_vibrate_t || periodic_sound_t || 
+    show_phone_battery_t || show_watch_battery_t || periodic_vibrate_t || periodic_sound_t || 
     bluetooth_vibrate_t || bluetooth_sound_t || bluetooth_icon_t || volume_t || js_ready_t) {
     
-    // if show battery was toggled
-    if (prev_ShowPhoneBattery != settings.ShowPhoneBattery) {
+    // resize battery layers if watch or phone battery was toggled
+    if ((prev_ShowWatchBattery != settings.ShowWatchBattery) || (prev_ShowPhoneBattery != settings.ShowPhoneBattery)) {
       int bar_offset = (PBL_DISPLAY_HEIGHT / 6);
       int bar_height = (PBL_DISPLAY_HEIGHT / 24);
       int bar_width = PBL_DISPLAY_WIDTH / 1.1;
       int bar_x = (PBL_DISPLAY_WIDTH - bar_width) / 2;
       int bar_y = PBL_IF_ROUND_ELSE(PBL_DISPLAY_HEIGHT - (bar_offset + (PBL_DISPLAY_HEIGHT / 3.75)), PBL_DISPLAY_HEIGHT - (bar_offset - (PBL_DISPLAY_HEIGHT / 12)));
-      if (settings.ShowPhoneBattery) {
-        bar_width = (bar_width / 2) - (bar_x / 2);
+      int phone_bar_x = bar_x;
+      int small_bar_width = (bar_width / 2) - (bar_x / 2);
+      int watch_bar_width = bar_width;
+      int phone_bar_width = bar_width;
+      if (settings.ShowWatchBattery) {
+        phone_bar_width = small_bar_width;
+        phone_bar_x = (bar_x * 2) + small_bar_width;
       }
-      layer_set_frame(s_battery_layer, GRect(bar_x, bar_y, bar_width, bar_height));
+      if (settings.ShowPhoneBattery) {
+        watch_bar_width = small_bar_width;
+      }
+      layer_set_frame(s_battery_layer, GRect(bar_x, bar_y, watch_bar_width, bar_height));
       layer_mark_dirty(s_battery_layer);
+      layer_set_frame(s_phone_battery_layer, GRect(phone_bar_x, bar_y, phone_bar_width, bar_height));
+      layer_mark_dirty(s_phone_battery_layer);
     }
 
     //resize weather and health layers if steps and/or HR is toggled
@@ -1165,23 +1183,30 @@ static void main_window_load(Window *window) {
   text_layer_set_font(s_date2_layer, s_info_font);
   text_layer_set_text_alignment(s_date2_layer, GTextAlignmentCenter);
 
-  // Create battery meter Layer
+  // position the battery meters
   int bar_offset = (PBL_DISPLAY_HEIGHT / 6);
   int bar_height = (PBL_DISPLAY_HEIGHT / 24);
   int bar_width = bounds.size.w / 1.1;
   int bar_x = (bounds.size.w - bar_width) / 2;
   int bar_y = PBL_IF_ROUND_ELSE(bounds.size.h - (bar_offset + (bounds.size.h / 3.75)), bounds.size.h - (bar_offset - (bounds.size.h / 12)));
-  int phone_bar_width = (bar_width / 2) - (bar_x / 2);
-  if (settings.ShowPhoneBattery) {
-    bar_width = phone_bar_width;
+  int phone_bar_x = bar_x;
+  int small_bar_width = (bar_width / 2) - (bar_x / 2);
+  int watch_bar_width = bar_width;
+  int phone_bar_width = bar_width;
+  if (settings.ShowWatchBattery) {
+    phone_bar_width = small_bar_width;
+    phone_bar_x = (bar_x * 2) + small_bar_width;
   }
-  s_battery_layer = layer_create(GRect(bar_x, bar_y, bar_width, bar_height));
+  if (settings.ShowPhoneBattery) {
+    watch_bar_width = small_bar_width;
+  }
+
+  // Create battery meter Layer
+  s_battery_layer = layer_create(GRect(bar_x, bar_y, watch_bar_width, bar_height));
   layer_set_update_proc(s_battery_layer, watch_battery_update_proc);
 
   // Create phone battery meter Layer
-  int phone_bar_y = bar_y;
-  int phone_bar_x = (bar_x * 2) + phone_bar_width;
-  s_phone_battery_layer = layer_create(GRect(phone_bar_x, phone_bar_y, phone_bar_width, bar_height));
+  s_phone_battery_layer = layer_create(GRect(phone_bar_x, bar_y, phone_bar_width, bar_height));
   layer_set_update_proc(s_phone_battery_layer, phone_battery_update_proc);
 
   // Position the weather and health blocks
