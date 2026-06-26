@@ -90,6 +90,7 @@
       "PeriodicSound",
       "BluetoothVibrate",
       "BluetoothSound",
+      "BluetoothIcon",
       "Volume",
       "ShowPhoneBattery",
       "REQUEST_BATTERY",

@@ -66,6 +66,7 @@ typedef struct ClaySettings {
   bool PeriodicSound;
   bool BluetoothVibrate;
   bool BluetoothSound;
+  bool BluetoothIcon;
   int Volume;
   int Latitude;
   int Longitude;
@@ -182,6 +183,7 @@ static void prv_default_settings() {
   settings.PeriodicSound = false;
   settings.BluetoothVibrate = false;
   settings.BluetoothSound = false;
+  settings.BluetoothIcon = true;
   settings.Volume = 50;
   // storage
   settings.IsDay=false;
@@ -640,8 +642,8 @@ static void phone_battery_update_proc(Layer *layer, GContext *ctx) {
 
 static void bluetooth_callback(bool connected) {
   // Show icon if disconnected
-  layer_set_hidden(text_layer_get_layer(s_moon_layer), !connected || !settings.ShowMoon);
-  layer_set_hidden(text_layer_get_layer(s_bt_icon_layer), connected);
+  layer_set_hidden(text_layer_get_layer(s_moon_layer), ((!connected && settings.BluetoothIcon) || !settings.ShowMoon));
+  layer_set_hidden(text_layer_get_layer(s_bt_icon_layer), ((connected && settings.BluetoothIcon) || !settings.BluetoothIcon));
   if (!connected) {
     //phone was disconnected
     if (settings.BluetoothVibrate) {
@@ -877,6 +879,10 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   if (bluetooth_sound_t) {
     settings.BluetoothSound = bluetooth_sound_t->value->int32 == 1;
   }
+  Tuple *bluetooth_icon_t = dict_find(iterator, MESSAGE_KEY_BluetoothIcon);
+  if (bluetooth_icon_t) {
+    settings.BluetoothIcon = bluetooth_icon_t->value->int32 == 1;
+  }
   Tuple *volume_t = dict_find(iterator, MESSAGE_KEY_Volume);
   if (volume_t) {
     settings.Volume = (int)volume_t->value->int32;
@@ -955,7 +961,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     show_weather_t || temp_unit_t || weahter_interval_t || show_sun_t || show_moon_t || man_lat_t || man_lon_t || 
     show_charging_t || battery_mid_percent_t || battery_low_percent_t || 
     show_phone_battery_t || periodic_vibrate_t || periodic_sound_t || 
-    bluetooth_vibrate_t || bluetooth_sound_t || volume_t || js_ready_t) {
+    bluetooth_vibrate_t || bluetooth_sound_t || bluetooth_icon_t || volume_t || js_ready_t) {
     
     // if show battery was toggled
     if (prev_ShowPhoneBattery != settings.ShowPhoneBattery) {
@@ -1084,14 +1090,13 @@ static void prv_unobstructed_did_change(void *context) {
     layer_set_hidden(text_layer_get_layer(s_sunset_layer), true);
     layer_set_hidden(text_layer_get_layer(s_moon_layer), true);
   } else {
-    layer_set_hidden(text_layer_get_layer(s_bt_icon_layer),
-      connection_service_peek_pebble_app_connection());
+    layer_set_hidden(text_layer_get_layer(s_bt_icon_layer), ((connection_service_peek_pebble_app_connection() && settings.BluetoothIcon) || !settings.BluetoothIcon));
     layer_set_hidden(text_layer_get_layer(s_health_layer), (!settings.ShowSteps && !settings.ShowHR));
     layer_set_hidden(text_layer_get_layer(s_weather_layer), !settings.ShowWeather);
     layer_set_hidden(text_layer_get_layer(s_weather_icon_layer), !settings.ShowWeather);
     layer_set_hidden(text_layer_get_layer(s_sunrise_layer), !settings.ShowSun);
     layer_set_hidden(text_layer_get_layer(s_sunset_layer), !settings.ShowSun);
-    layer_set_hidden(text_layer_get_layer(s_moon_layer), (!settings.ShowMoon || !connection_service_peek_pebble_app_connection()));
+    layer_set_hidden(text_layer_get_layer(s_moon_layer), ((!connection_service_peek_pebble_app_connection() && settings.BluetoothIcon) || !settings.ShowMoon));
   }
 }
 
