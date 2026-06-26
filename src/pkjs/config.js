@@ -423,6 +423,12 @@ module.exports = [
       },
       {
         "type": "toggle",
+        "messageKey": "BluetoothIcon",
+        "label": "  - Icon",
+        "defaultValue": true
+      },
+      {
+        "type": "toggle",
         "messageKey": "BluetoothVibrate",
         "label": "  - Vibrate",
         "defaultValue": false
