@@ -369,6 +369,12 @@ module.exports = [
       },
       {
         "type": "toggle",
+        "messageKey": "ShowWatchBattery",
+        "label": "Show Watch Battery",
+        "defaultValue": true
+      },
+      {
+        "type": "toggle",
         "messageKey": "ShowPhoneBattery",
         "label": "Show Phone Battery",
         "defaultValue": false

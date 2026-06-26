@@ -92,6 +92,7 @@
       "BluetoothSound",
       "BluetoothIcon",
       "Volume",
+      "ShowWatchBattery",
       "ShowPhoneBattery",
       "REQUEST_BATTERY",
       "UNSUBSCRIBE_BATTERY",
