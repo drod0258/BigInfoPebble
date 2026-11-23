@@ -21,6 +21,17 @@ A simple, clean Pebble watchface with a large, easy-to-read font. Displays the e
 ## Want to try it?
 Download on the Pebble store: https://apps.repebble.com/5eda31d774a34edeb1c87a39
 
+## Building & running
+Follow the official documentaion to install the Pebble SDK at https://developer.repebble.com/sdk/, then build and run it locally:
+
+```sh
+pebble build                          # build for all targetPlatforms
+pebble install --emulator emery       # install on the emery emulator
+pebble install --phone <ip>           # install to a paired phone
+```
+
+Or try it entirely in your browser by importing the project with CloudPebble at https://cloudpebble.repebble.com/
+
 ## Supported Platforms
 
 | Platform | Model |
