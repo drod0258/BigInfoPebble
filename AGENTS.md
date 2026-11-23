@@ -44,21 +44,11 @@ pebble screenshot --scale 6 --no-open screenshot.png   # then view screenshot.pn
 
 Only keep a connection open (`pebble logs`, `--logs`) while you actually need its output. On a physical watch (`--phone` / `--cloudpebble`), an open log stream keeps Bluetooth active and drains the battery of the watch and phone. Leave out `--logs` when you only need to install, and stop any log stream as soon as you have what you need.
 
-Repeat with `--emulator <platform>` for each platform in `targetPlatforms` in package.json. Round displays (gabbro) and the smaller screens (aplite, diorite) need their own check.
+By default, validate only `emery`; test another platform or all `targetPlatforms` only when explicitly instructed. When requested, round displays (`gabbro`) and smaller screens (`aplite`, `diorite`) need their own checks.
 
-If the emulator gets into a strange state, such as a screenshot that shows a different app or an install that times out, `pebble kill` stops it and `pebble wipe` resets its storage, and `pebble clean` clears the build cache; then install again.
+Before installing a new build for emulator validation, run `pebble kill` and `pebble wipe` to stop the emulator and clear cached app/settings state; otherwise stale settings can make the new build appear unchanged. If issues persist, `pebble clean` clears the build cache; then install again.
 
-### Headless Environments
-
-If you're running in an environment without a window server (e.g., headless Linux, Docker, CI), you must add `--vnc` to **all commands that interact with the emulator**. This includes app installs, screenshots, button presses, and any `emu-*` commands:
-
-```bash
-pebble install --emulator basalt --vnc
-pebble screenshot --vnc --scale 6 --no-open screenshot.png
-pebble emu-button --emulator basalt --vnc click select
-```
-
-The `--vnc` flag enables a VNC-based display backend that doesn't require X11.
+After automated emulator validation, run `pebble kill` and `pebble wipe` to stop the emulator and clear its state. Leave the emulator running only when explicitly asked to run it.
 
 ## Project Structure
 
@@ -105,6 +95,7 @@ Key Entry Points:
 ## Development Best Practices
 
 - Whenever making changes, run `pebble screenshot --scale 6 --no-open screenshot.png` and view the screenshot to make sure it's what the user requested. If not, make more changes until it does what it's supposed to.
+- Use `./debug.sh enable` to preview optional fields with mock step/heart-rate values; weather and sun still use the configured location/network, and heart-rate display must be enabled separately. Run `./debug.sh disable` after testing and inspect `git diff`: it edits `src/c/main.c` and `src/pkjs/index.js` in place, resetting hard-coded defaults rather than restoring prior values.
 
 ## AI Code Review Guidelines
 
