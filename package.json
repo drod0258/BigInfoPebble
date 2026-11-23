@@ -154,6 +154,18 @@
           ]
         }
       ]
-    }
+    },
+    "usesPermission": [
+      {
+        "name": "Location",
+        "reason": "To show the weather where you are",
+        "required": false
+      },
+      {
+        "name": "Health",
+        "reason": "To show health data on the watchface",
+        "required": false
+      }
+    ]
   }
 }

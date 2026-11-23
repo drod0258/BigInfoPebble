@@ -39,7 +39,6 @@ case "$1" in
 
         # 3. Uncomment functions in index.js
         sed -i 's/\/\/getSunInfo();/getSunInfo();/g' "$INDEX_JS"
-        sed -i 's/\/\/getWeatherInfo();/getWeatherInfo();/g' "$INDEX_JS"
         
         echo "Done!"
         ;;
@@ -64,7 +63,7 @@ case "$1" in
         # 3. Comment functions back out in index.js
         #sed -i 's/getSunInfo();/\/\/getSunInfo();/g' "$INDEX_JS"
         #sed -i 's/getWeatherInfo();/\/\/getWeatherInfo();/g' "$INDEX_JS"
-        sed -i '/\/\/ Get the initial data/,+2 s/\(getSunInfo\|getWeatherInfo\)/\/\/\1/g' "$INDEX_JS"
+        sed -i '/\/\/ Get the initial data/,+2 s/\(getSunInfo\)/\/\/\1/g' "$INDEX_JS"
         
         echo "Done!"
         ;;

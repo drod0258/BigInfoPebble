@@ -233,130 +233,8 @@ function stopBattery() {
 }
 // end battery functions
 
-// Convert Open-Meteo weather code to human-readable condition
-function weatherCodeToCondition(code) {
-  if (code === 0) return 0; //'Clear';
-  if (code <= 3) return  code; //'Cloudy';
-  if (code <= 48) return 4; //'Fog';
-  if (code <= 55) return 5; //'Drizzle';
-  if (code <= 57) return 6; //'Fz. Drizzle';
-  if (code <= 65) return 7; //'Rain';
-  if (code <= 67) return 8; //'Fz. Rain';
-  if (code <= 75) return 9; //'Snow';
-  if (code <= 77) return 10; //'Snow Grains';
-  if (code <= 82) return 11; //'Showers';
-  if (code <= 86) return 12; //'Snow Shwrs';
-  if (code === 95) return 13; //'T-Storm';
-  if (code <= 99) return 14; //'T-Storm';
-  return 15; //unknown
-}
-
-function weatherInfo(pos) {
-  var lat = pos.coords.latitude;
-  var lon = pos.coords.longitude;
-  console.log("lat: " + lat);
-  console.log("lon: " + lon);
-  // Construct Open-Meteo API URL
-  var url = 'https://api.open-meteo.com/v1/forecast?' +
-      'latitude=' + lat +
-      '&longitude=' + lon +
-      '&current=temperature_2m,weather_code,is_day' +
-      '&daily=sunrise,sunset&timezone=auto&forecast_days=1';
-
-  // Send request to Open-Meteo
-  xhrRequest(url, 'GET',
-    function(responseText) {
-      var json = JSON.parse(responseText);
-
-      // Temperature (already in Celsius)
-      var temperature = Math.round(json.current.temperature_2m);
-      console.log('Temperature is ' + temperature);
-
-      // Conditions from weather code
-      var conditions = 15 // default to "unknown" weather condition
-      conditions = weatherCodeToCondition(json.current.weather_code);
-      console.log('Conditions are ' + conditions);
-
-      // change condition based on day or night
-      var is_day = json.current.is_day;
-      console.log('Is it day: ' + is_day);
-      if (is_day === 0) {
-        conditions = conditions + 16;
-      }
-
-      // sun times                                                                                            
-      var sunriseParts = json.daily.sunrise[0].split('T')[1].split(':');                                                                   
-      var sunsetParts = json.daily.sunset[0].split('T')[1].split(':');                                                                     
-      var sunriseint = parseInt(sunriseParts[0]) * 100 + parseInt(sunriseParts[1]);                                                        
-      var sunsetint = parseInt(sunsetParts[0]) * 100 + parseInt(sunsetParts[1]);
-      console.log('sunrise: ' + sunriseint);
-      console.log('sunset: ' + sunsetint);
-
-      // Assemble dictionary
-      var dictionary = {
-        "TEMPERATURE": temperature,
-        "CONDITIONS": conditions,
-        "SUNRISE": sunriseint,
-        "SUNSET": sunsetint
-      };
-
-      // Send to Pebble
-      Pebble.sendAppMessage(dictionary,
-        function(e) {
-          console.log('Weather info sent to Pebble successfully!');
-        },
-        function(e) {
-          console.log('Error sending weather info to Pebble!');
-        }
-      );
-    }
-  );
-}
-
-function weatherError(err) {
-  console.log('Error requesting location!');
-  var dictionary = {
-    "CONDITIONS": 15 // send "unknown" weather code
-  };
-  // Send to Pebble
-  Pebble.sendAppMessage(dictionary,
-    function(e) {
-      console.log('Weather error sent to Pebble');
-    },
-    function(e) {
-      console.log('Error sending weather error to Pebble!');
-    }
-  );
-}
-
 function locationError(err) {
   console.log('Error requesting location!');
-}
-
-function getWeatherInfo() {
-  if (localStorage.getItem('manualCoordinates') == 1) {
-    const mockPosition = {
-      coords: {
-        latitude: (localStorage.getItem('Latitude') / 1000000),
-        longitude: (localStorage.getItem('Longitude') / 1000000),
-        altitude: null,
-        accuracy: 100,
-        altitudeAccuracy: null,
-        heading: null,
-        speed: null
-      },
-      timestamp: Date.now()
-    };
-    console.log('Using manual coordinates for weather info');
-    weatherInfo(mockPosition);
-  } else {
-    console.log('Using GPS for weather info');
-    navigator.geolocation.getCurrentPosition(
-      weatherInfo,
-      weatherError,
-      { timeout: 15000, maximumAge: 60000 }
-    );
-  }
 }
 
 function getSunInfo() {
@@ -385,6 +263,70 @@ function getSunInfo() {
   }
 }
 
+// weather plugin functions
+var latestWeather = null;
+
+function weatherConditionToCode(condition) {
+  if (condition === "sun") return 0;
+  if (condition === "partly_cloudy") return 1;
+  if (condition === "cloudy") return 2;
+  if (condition === "light_rain") return 3;
+  if (condition === "heavy_rain") return 4;
+  if (condition === "light_snow") return 5;
+  if (condition === "heavy_snow") return 6;
+  if (condition === "rain_and_snow") return 7;
+  return 8; //unknown
+}
+
+function sendWeather() {
+  if (!latestWeather) {
+    return;
+  }
+  Pebble.sendAppMessage(latestWeather,
+    function(e) {
+      console.log('Weather info sent!');
+    },
+    function(e) {
+      console.log('Error sending weather info!');
+    }
+  );
+}
+
+function subscribeToWeather() {
+  Pebble.subscribeToSource({
+    category: 'weather',
+    item: 'location',
+    properties: ['temperature', 'condition_code'],
+    onData: function(update) {
+      var here = update.instances[0];
+      if (!here) {
+        return;
+      }
+
+      // Any property can be missing, so check before using it
+      var temperature = here.properties.temperature;
+      var condition = here.properties.condition_code;
+      if (!temperature || !temperature.numericValue ||
+          !condition || !condition.longText) {
+        console.log('Weather unavailable');
+        return;
+      }
+
+      console.log('temperature: ' + JSON.stringify(temperature));
+      console.log('condition: ' + JSON.stringify(condition));
+
+      latestWeather = {
+        'TEMPERATURE': temperature.numericValue.value,
+        'CONDITIONS': weatherConditionToCode(condition.longText.text)
+      };
+      sendWeather();
+    },
+    onError: function(err) {
+      console.log('Weather unavailable: ' + err.code + ' ' + err.message);
+    }
+  });
+}
+
 // Listen for when the watchface is opened
 Pebble.addEventListener('ready',
   function(e) {
@@ -392,7 +334,7 @@ Pebble.addEventListener('ready',
     Pebble.sendAppMessage({'JSReady': 1}); // Update s_js_ready on watch
     // Get the initial data
     //getSunInfo();
-    //getWeatherInfo();
+    subscribeToWeather();
     if (localStorage.getItem('phoneBatteryEnabled') == 1) {
       getBatteryInfo();
     }
@@ -432,7 +374,7 @@ Pebble.addEventListener('appmessage',
     }
     // Check if this is a weather refresh request
     if (dict['REQUEST_WEATHER']) {
-      getWeatherInfo();
+      sendWeather();
     }
     // Check if this is a battery refresh request
     if (dict['REQUEST_BATTERY']) {

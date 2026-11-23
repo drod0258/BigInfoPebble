@@ -194,7 +194,7 @@ static void prv_default_settings() {
   settings.SunsetTime=2359;
   settings.MoonPhase=29;
   settings.WeatherTemp=-99;
-  settings.WeatherIcon=15;
+  settings.WeatherIcon=8;
   settings.PhoneBattery=0;
   settings.PhoneCharging=false;
   settings.requestSun=false;
@@ -207,37 +207,23 @@ static void prv_default_settings() {
 
 static char* weather_conditions[] = {
   "\U0000f00d", //  0  "wi_day_clear"
-  "\U0000f00c", //  1  "wi_day_sunny_overcast"
-  "\U0000f002", //  2  "wi_day_cloudy"
-  "\U0000f041", //  3  "wi_cloud"
-  "\U0000f014", //  4  "wi_fog"
-  "\U0000f01c", //  5  "wi_sprinkle"
-  "\U0000f0b5", //  6  "wi_sleet"
-  "\U0000f019", //  7  "wi_rain"
-  "\U0000f017", //  8  "wi_rain_mix"
-  "\U0000f064", //  9  "wi_snow_wind"
-  "\U0000f01b", // 10  "wi_snow"
-  "\U0000f01a", // 11  "wi_showers"
-  "\U0000f01b", // 12  "wi_snow"
-  "\U0000f01e", // 13  "wi_thunderstorm"
-  "\U0000f01d", // 14  "wi_storm_showers"
-  "\U0000F07B", // 15  "unknown"
-  "\U0000f02e", // 16  "wi_night_clear"
-  "\U0000f081", // 17  "wi_night_alt_partly_cloudy"
-  "\U0000f086", // 18  "wi_night_alt_cloudy"
-  "\U0000f041", // 19  "wi_cloud"
-  "\U0000f014", // 20  "wi_fog"
-  "\U0000f01c", // 21  "wi_sprinkle"
-  "\U0000f0b5", // 22  "wi_sleet"
-  "\U0000f019", // 23  "wi_rain"
-  "\U0000f017", // 24  "wi_rain_mix"
-  "\U0000f064", // 25  "wi_snow_wind"
-  "\U0000f01b", // 26  "wi_snow"
-  "\U0000f01a", // 27  "wi_showers"
-  "\U0000f01b", // 28  "wi_snow"
-  "\U0000f01e", // 29  "wi_thunderstorm"
-  "\U0000f01d", // 30  "wi_storm_showers"
-  "\U0000F07B", // 31  "unknown"
+  "\U0000f002", //  1  "wi_day_cloudy"
+  "\U0000f041", //  2  "wi_cloud"
+  "\U0000f01a", //  3  "wi_showers"
+  "\U0000f019", //  4  "wi_rain"
+  "\U0000f01b", //  5  "wi_snow"
+  "\U0000f01b", //  6  "wi_snow"
+  "\U0000f017", //  7  "wi_rain_mix"
+  "\U0000F07B", //  8  "unknown"
+  "\U0000f02e", //  9  "wi_night_clear"
+  "\U0000f086", // 10  "wi_night_alt_cloudy"
+  "\U0000f041", // 11  "wi_cloud"
+  "\U0000f01a", // 12  "wi_showers"
+  "\U0000f019", // 13  "wi_rain"
+  "\U0000f01b", // 14  "wi_snow"
+  "\U0000f01b", // 15  "wi_snow"
+  "\U0000f017", // 16  "wi_rain_mix"
+  "\U0000F07B", // 17  "unknown"
 };
 static char* moon_phase[] ={
   "\U0000F095",//'wi-moon-new':0,
@@ -914,11 +900,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   // Check for weather data
   Tuple *temp_tuple = dict_find(iterator, MESSAGE_KEY_TEMPERATURE);
   if (temp_tuple) {
-    if (settings.TemperatureUnit) {
-      settings.WeatherTemp = ((int)temp_tuple->value->int32 * 9 / 5) + 32;
-    } else {
-      settings.WeatherTemp = (int)temp_tuple->value->int32;
-    }
+    settings.WeatherTemp = (int)temp_tuple->value->int32;
   }
   Tuple *conditions_tuple = dict_find(iterator, MESSAGE_KEY_CONDITIONS);
   if (conditions_tuple) {
