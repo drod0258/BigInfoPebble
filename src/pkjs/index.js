@@ -190,6 +190,7 @@ function getSunInfo() {
 var latestWeather = null;
 var latestBattery = null;
 var latestSun = null;
+var latestMoon = null;
 
 function weatherConditionToCode(condition) {
   if (condition === "sun") return 0;
@@ -201,6 +202,60 @@ function weatherConditionToCode(condition) {
   if (condition === "heavy_snow") return 6;
   if (condition === "rain_and_snow") return 7;
   return 8; //unknown
+}
+
+function hasShape(source, property, shape) {
+  var shapes = source.properties && source.properties[property];
+  return shapes && shapes.indexOf(shape) !== -1;
+}
+
+function illuminationFraction(illumination) {
+  var value = illumination.value;
+  var min = illumination.min;
+  var max = illumination.max;
+  if (max > min) {
+    value = (value - min) / (max - min);
+  } else if (illumination.unit === '%' || value > 1) {
+    value /= 100;
+  }
+  if (value < 0 || value > 1) {
+    return null;
+  }
+  return value;
+}
+
+function phaseDirectionFromText(text) {
+  if (typeof text !== 'string') {
+    return null;
+  }
+  var phase = text.toLowerCase().replace(/[_-]+/g, ' ');
+  if (phase.indexOf('new') !== -1) return 'new';
+  if (phase.indexOf('full') !== -1) return 'full';
+  if (phase.indexOf('waxing') !== -1 ||
+      phase.indexOf('first quarter') !== -1) return 'waxing';
+  if (phase.indexOf('waning') !== -1 ||
+      phase.indexOf('third quarter') !== -1 ||
+      phase.indexOf('last quarter') !== -1) return 'waning';
+  return null;
+}
+
+function phaseIndexFromIllumination(illumination, phaseText) {
+  var direction = phaseDirectionFromText(phaseText.text);
+  var fraction = illuminationFraction(illumination);
+
+  // New and full are the endpoints where waxing/waning is ambiguous.
+  if (fraction === 0 || direction === 'new') return 0;
+  if (fraction === 1 || direction === 'full') return 14;
+  if (fraction === null || direction === null) {
+    return null;
+  }
+
+  // Illumination is symmetric, so phase text supplies the missing direction.
+  var phase = Math.acos(1 - 2 * fraction) / (2 * Math.PI);
+  if (direction === 'waning') {
+    phase = 1 - phase;
+  }
+  return Math.max(0, Math.min(28, Math.round(phase * 28)));
 }
 
 function sendWeather() {
@@ -242,6 +297,19 @@ function sendSun() {
     }
   );
 }
+function sendMoon() {
+  if (!latestMoon) {
+    return;
+  }
+  Pebble.sendAppMessage(latestMoon,
+    function(e) {
+      console.log('Moon info sent!');
+    },
+    function(e) {
+      console.log('Error sending Moon info!');
+    }
+  );
+}
 
 function subscribeToWeather() {
   Pebble.subscribeToSource({
@@ -251,6 +319,7 @@ function subscribeToWeather() {
     onData: function(update) {
       var here = update.instances[0];
       if (!here) {
+        console.log('Weather unavailable');
         return;
       }
 
@@ -270,6 +339,9 @@ function subscribeToWeather() {
       } else {
         var temperatureUnit = 1;
       }
+      console.log('weather: ' + temperature.numericValue.value);
+      console.log('weatherUnit: ' + temperatureUnit);
+      console.log('weatherCondition: ' + weatherConditionToCode(condition.longText.text));
       latestWeather = {
         'TEMPERATURE': temperature.numericValue.value,
         'TEMPERATURE_UNIT': temperatureUnit,
@@ -290,6 +362,7 @@ function subscribeToBattery() {
     onData: function(update) {
       var here = update.instances[0];
       if (!here) {
+        console.log('Battery unavailable');
         return;
       }
 
@@ -300,7 +373,7 @@ function subscribeToBattery() {
         return;
       }
       console.log('battery_level: ' + JSON.stringify(battery_level));
-
+      console.log('battery: ' + battery_level.numericValue.value);
       latestBattery = {
         "BATTERY": battery_level.numericValue.value,
       };
@@ -320,11 +393,6 @@ function subscribeToSun() {
   var availablePlugins = Pebble.enumeratePlugins() || [];
   var selectedSource = null;
 
-  function hasTimestamp(source, property) {
-    var shapes = source.properties && source.properties[property];
-    return shapes && shapes.indexOf('timestamp') !== -1;
-  }
-
   for (var i = 0; i < sourcePriority.length && !selectedSource; i++) {
     var preferred = sourcePriority[i];
     for (var j = 0; j < availablePlugins.length && !selectedSource; j++) {
@@ -336,8 +404,8 @@ function subscribeToSun() {
         var source = plugin.sources[k];
         if (source.category === preferred.category &&
             source.items && source.items.indexOf(preferred.item) !== -1 &&
-            hasTimestamp(source, 'sunrise') &&
-            hasTimestamp(source, 'sunset')) {
+            hasShape(source, 'sunrise', 'timestamp') &&
+            hasShape(source, 'sunset', 'timestamp')) {
           selectedSource = {
             plugin: plugin,
             category: preferred.category,
@@ -362,6 +430,10 @@ function subscribeToSun() {
     properties: ['sunrise', 'sunset'],
     onData: function(update) {
       var here = update.instances[0];
+      if (!here) {
+        console.log('Sun data unavailable');
+        return;
+      }
       var sunrise = here.properties.sunrise
       var sunset = here.properties.sunset
       if (!sunrise || !sunrise.timestamp ||
@@ -373,15 +445,98 @@ function subscribeToSun() {
       console.log('sunset: ' + JSON.stringify(sunset));
 
       var sunriseDate = new Date(sunrise.timestamp.value * 1000);
+      var sunriseHour = sunriseDate.getHours();
+      var sunriseMinute = sunriseDate.getMinutes();
+      var sunriseTime = sunriseHour * 100 + sunriseMinute;
+
       var sunsetDate = new Date(sunset.timestamp.value * 1000);
+      var sunsetHour = sunsetDate.getHours();
+      var sunsetMinute = sunsetDate.getMinutes();
+      var sunsetTime = sunsetHour * 100 + sunsetMinute;
+
+      console.log('sun: ' + sunriseTime + '/' + sunsetTime);
       latestSun = {
-        'SUNRISE': sunriseDate.getHours() * 100 + sunriseDate.getMinutes(),
-        'SUNSET': sunsetDate.getHours() * 100 + sunsetDate.getMinutes()
+        'SUNRISE': sunriseTime,
+        'SUNSET': sunsetTime
       };
       sendSun();
     },
     onError: function(err) {
       console.log('Sun data unavailable: ' + err.code + ' ' + err.message);
+    }
+  });
+}
+function subscribeToMoon() {
+  var sourcePriority = [
+    { category: 'astronomy', item: 'moon' },
+    { category: 'weather', item: 'moon' }
+  ];
+  var availablePlugins = Pebble.enumeratePlugins() || [];
+  var selectedSource = null;
+
+  for (var i = 0; i < sourcePriority.length && !selectedSource; i++) {
+    var preferred = sourcePriority[i];
+    for (var j = 0; j < availablePlugins.length && !selectedSource; j++) {
+      var plugin = availablePlugins[j];
+      if (!plugin.uuid || !plugin.sources) {
+        continue;
+      }
+      for (var k = 0; k < plugin.sources.length; k++) {
+        var source = plugin.sources[k];
+        if (source.category === preferred.category &&
+            source.items && source.items.indexOf(preferred.item) !== -1 &&
+            hasShape(source, 'illumination', 'numericValue') &&
+            hasShape(source, 'phase', 'shortText')) {
+          selectedSource = {
+            plugin: plugin,
+            category: preferred.category,
+            item: preferred.item
+          };
+          break;
+        }
+      }
+    }
+  }
+
+  if (!selectedSource) {
+    console.log('No compatible moon plugin found!');
+    return;
+  }
+
+  console.log('Using ' + selectedSource.plugin.name + "'s " + selectedSource.category + '/' + selectedSource.item + ' for moon data');
+  Pebble.subscribeToSource({
+    category: selectedSource.category,
+    item: selectedSource.item,
+    plugin: selectedSource.plugin.uuid,
+    properties: ['illumination', 'phase'],
+    onData: function(update) {
+      var here = update.instances[0];
+      if (!here || !here.properties) {
+        console.log('Moon phase unavailable');
+        return;
+      }
+      var phase = here.properties.phase;
+      var illumination = here.properties.illumination;
+    
+      if (!phase || !phase.shortText ||
+          !illumination || !illumination.numericValue) {
+        console.log('Moon phase unavailable');
+        return;
+      }
+      console.log('moon phase: ' + JSON.stringify(phase));
+      console.log('moon illumination: ' + JSON.stringify(illumination));
+
+      var moonPhase = phaseIndexFromIllumination(illumination.numericValue, phase.shortText);
+      if (moonPhase === null) {
+        console.log('Moon phase unavailable');
+        return;
+      }
+      console.log('moon: ' + moonPhase);
+      latestMoon = { 'MOONPHASE': moonPhase };
+      sendMoon();
+    },
+    onError: function(err) {
+      console.log('Moon data unavailable: ' + err.code + ' ' + err.message);
     }
   });
 }
@@ -396,6 +551,7 @@ Pebble.addEventListener('ready',
     subscribeToWeather();
     subscribeToBattery();
     subscribeToSun();
+    subscribeToMoon();
   }
 );
 
@@ -429,6 +585,7 @@ Pebble.addEventListener('appmessage',
     // Check if this is a sun info refresh request
     if (dict['REQUEST_SUN']) {
       sendSun();
+      sendMoon();
     }
     // Check if this is a weather refresh request
     if (dict['REQUEST_WEATHER']) {
