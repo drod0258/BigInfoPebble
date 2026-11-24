@@ -155,7 +155,7 @@
         }
       ]
     },
-    "usesPermission": [
+    "usesPermissions": [
       {
         "name": "Location",
         "reason": "To show the weather where you are",

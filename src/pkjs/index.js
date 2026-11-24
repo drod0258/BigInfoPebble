@@ -189,6 +189,7 @@ function getSunInfo() {
 // start plugins
 var latestWeather = null;
 var latestBattery = null;
+var latestSun = null;
 
 function weatherConditionToCode(condition) {
   if (condition === "sun") return 0;
@@ -225,6 +226,19 @@ function sendBattery() {
     },
     function(e) {
       console.log('Error sending battery info!');
+    }
+  );
+}
+function sendSun() {
+  if (!latestSun) {
+    return;
+  }
+  Pebble.sendAppMessage(latestSun,
+    function(e) {
+      console.log('Sun info sent!');
+    },
+    function(e) {
+      console.log('Error sending sun info!');
     }
   );
 }
@@ -297,6 +311,80 @@ function subscribeToBattery() {
     }
   });
 }
+function subscribeToSun() {
+  var sourcePriority = [
+    { category: 'astronomy', item: 'sun' },
+    { category: 'weather', item: 'sun' },
+    { category: 'weather', item: 'location' }
+  ];
+  var availablePlugins = Pebble.enumeratePlugins() || [];
+  var selectedSource = null;
+
+  function hasTimestamp(source, property) {
+    var shapes = source.properties && source.properties[property];
+    return shapes && shapes.indexOf('timestamp') !== -1;
+  }
+
+  for (var i = 0; i < sourcePriority.length && !selectedSource; i++) {
+    var preferred = sourcePriority[i];
+    for (var j = 0; j < availablePlugins.length && !selectedSource; j++) {
+      var plugin = availablePlugins[j];
+      if (!plugin.uuid || !plugin.sources) {
+        continue;
+      }
+      for (var k = 0; k < plugin.sources.length; k++) {
+        var source = plugin.sources[k];
+        if (source.category === preferred.category &&
+            source.items && source.items.indexOf(preferred.item) !== -1 &&
+            hasTimestamp(source, 'sunrise') &&
+            hasTimestamp(source, 'sunset')) {
+          selectedSource = {
+            plugin: plugin,
+            category: preferred.category,
+            item: preferred.item
+          };
+          break;
+        }
+      }
+    }
+  }
+
+  if (!selectedSource) {
+    console.log('No compatible sun plugin found!');
+    return;
+  }
+
+  console.log('Using ' + selectedSource.plugin.name + "'s " + selectedSource.category + '/' + selectedSource.item + ' for sun data');
+  Pebble.subscribeToSource({
+    category: selectedSource.category,
+    item: selectedSource.item,
+    plugin: selectedSource.plugin.uuid,
+    properties: ['sunrise', 'sunset'],
+    onData: function(update) {
+      var here = update.instances[0];
+      var sunrise = here.properties.sunrise
+      var sunset = here.properties.sunset
+      if (!sunrise || !sunrise.timestamp ||
+          !sunset || !sunset.timestamp) {
+        console.log('Sun data unavailable');
+        return;
+      }
+      console.log('sunrise: ' + JSON.stringify(sunrise));
+      console.log('sunset: ' + JSON.stringify(sunset));
+
+      var sunriseDate = new Date(sunrise.timestamp.value * 1000);
+      var sunsetDate = new Date(sunset.timestamp.value * 1000);
+      latestSun = {
+        'SUNRISE': sunriseDate.getHours() * 100 + sunriseDate.getMinutes(),
+        'SUNSET': sunsetDate.getHours() * 100 + sunsetDate.getMinutes()
+      };
+      sendSun();
+    },
+    onError: function(err) {
+      console.log('Sun data unavailable: ' + err.code + ' ' + err.message);
+    }
+  });
+}
 // end plugins
 
 // Listen for when the watchface is opened
@@ -305,12 +393,9 @@ Pebble.addEventListener('ready',
     console.log('PebbleKit JS ready!');
     Pebble.sendAppMessage({'JSReady': 1}); // Update s_js_ready on watch
     // Get the initial data
-    //getSunInfo();
     subscribeToWeather();
     subscribeToBattery();
-    if (localStorage.getItem('phoneBatteryEnabled') == 1) {
-      getBatteryInfo();
-    }
+    subscribeToSun();
   }
 );
 
@@ -343,7 +428,7 @@ Pebble.addEventListener('appmessage',
 
     // Check if this is a sun info refresh request
     if (dict['REQUEST_SUN']) {
-      getSunInfo();
+      sendSun();
     }
     // Check if this is a weather refresh request
     if (dict['REQUEST_WEATHER']) {
@@ -353,7 +438,7 @@ Pebble.addEventListener('appmessage',
     if (dict['REQUEST_BATTERY']) {
       var batteryToggle = 1;
       localStorage.setItem('phoneBatteryEnabled', batteryToggle);
-      getBatteryInfo();
+      sendBattery();
     }
     // Check if this is a battery unsubscribe request
     if (dict['UNSUBSCRIBE_BATTERY']) {
