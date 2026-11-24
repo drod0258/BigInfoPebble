@@ -52,7 +52,6 @@ typedef struct ClaySettings {
   GColor BatteryLowColorNight;
   bool NightTheme;
   bool ShowWeather;
-  bool TemperatureUnit;
   int WeatherInterval;
   bool ShowDate;
   bool ShowDate2;
@@ -78,6 +77,7 @@ typedef struct ClaySettings {
   int SunsetTime;
   int MoonPhase;
   int WeatherTemp;
+  bool WeatherUnit;
   int WeatherIcon;
   int PhoneBattery;
   bool PhoneCharging;
@@ -173,7 +173,6 @@ static void prv_default_settings() {
   settings.ShowDate2 = false;
   settings.AltDate = false;
   settings.ShowWeather = false;
-  settings.TemperatureUnit = false;
   settings.WeatherInterval = 3;
   settings.ShowSteps = false;
   settings.ShowHR = false;
@@ -194,6 +193,7 @@ static void prv_default_settings() {
   settings.SunsetTime=2359;
   settings.MoonPhase=29;
   settings.WeatherTemp=-99;
+  settings.WeatherUnit = false;
   settings.WeatherIcon=8;
   settings.PhoneBattery=0;
   settings.PhoneCharging=false;
@@ -205,7 +205,7 @@ static void prv_default_settings() {
   settings.requestJS=false;
 }
 
-static char* weather_conditions[] = {
+static char* weather_condition[] = {
   "\U0000f00d", //  0  "wi_day_clear"
   "\U0000f002", //  1  "wi_day_cloudy"
   "\U0000f041", //  2  "wi_cloud"
@@ -396,13 +396,9 @@ static void update_date() {
 
 static void update_weather() {
   static char temperature_buffer[8];
-  if (settings.TemperatureUnit) {
-    snprintf(temperature_buffer, sizeof(temperature_buffer), "%d°F", settings.WeatherTemp);
-  } else {
-    snprintf(temperature_buffer, sizeof(temperature_buffer), "%d°C", settings.WeatherTemp);
-  }
+  snprintf(temperature_buffer, sizeof(temperature_buffer), "%d%s", settings.WeatherTemp, settings.WeatherUnit ? "°F" : "°C");
   text_layer_set_text(s_weather_layer, temperature_buffer);
-  text_layer_set_text(s_weather_icon_layer, weather_conditions[settings.WeatherIcon]);
+  text_layer_set_text(s_weather_icon_layer, weather_condition[settings.WeatherIcon]);
 }
 
 static void update_health() {
@@ -661,7 +657,6 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   bool prev_ShowMoon = settings.ShowMoon;
   bool prev_NightTheme = settings.NightTheme;
   bool prev_ShowWeather = settings.ShowWeather;
-  bool prev_TemperatureUnit = settings.TemperatureUnit;
   bool prev_ShowWatchBattery = settings.ShowWatchBattery;
   bool prev_ShowPhoneBattery = settings.ShowPhoneBattery;
   bool prev_AltDate = settings.AltDate;
@@ -810,10 +805,6 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   if (show_weather_t) {
     settings.ShowWeather = show_weather_t->value->int32 == 1;
   }
-  Tuple *temp_unit_t = dict_find(iterator, MESSAGE_KEY_TemperatureUnit);
-  if (temp_unit_t) {
-    settings.TemperatureUnit = temp_unit_t->value->int32 == 1;
-  }
   Tuple *weahter_interval_t = dict_find(iterator, MESSAGE_KEY_WeatherInterval);
   if (weahter_interval_t) {
     settings.WeatherInterval = (int)weahter_interval_t->value->int32;
@@ -902,11 +893,15 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   if (temp_tuple) {
     settings.WeatherTemp = (int)temp_tuple->value->int32;
   }
-  Tuple *conditions_tuple = dict_find(iterator, MESSAGE_KEY_CONDITIONS);
-  if (conditions_tuple) {
-    settings.WeatherIcon = (int)conditions_tuple->value->int32;
+  Tuple *temp_unit_tuple = dict_find(iterator, MESSAGE_KEY_TEMPERATURE_UNIT);
+  if (temp_unit_tuple) {
+    settings.WeatherUnit = temp_unit_tuple->value->int32 == 1;
   }
-  if (temp_tuple || conditions_tuple) {
+  Tuple *condition_tuple = dict_find(iterator, MESSAGE_KEY_CONDITION);
+  if (condition_tuple) {
+    settings.WeatherIcon = (int)condition_tuple->value->int32;
+  }
+  if (temp_tuple || temp_unit_tuple || condition_tuple) {
     update_weather();
   }
 
@@ -948,7 +943,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     sun_color_night_t || moon_color_night_t || battery_outline_color_night_t || battery_charging_color_night_t || 
     battery_full_color_night_t || battery_mid_color_night_t || battery_low_color_night_t || 
     show_date_t || show_date2_t || alt_date_t || show_steps_t || show_hr_t || 
-    show_weather_t || temp_unit_t || weahter_interval_t || show_sun_t || show_moon_t || man_lat_t || man_lon_t || 
+    show_weather_t || weahter_interval_t || show_sun_t || show_moon_t || man_lat_t || man_lon_t || 
     show_charging_t || battery_mid_percent_t || battery_low_percent_t || 
     show_phone_battery_t || show_watch_battery_t || periodic_vibrate_t || periodic_sound_t || 
     bluetooth_vibrate_t || bluetooth_sound_t || bluetooth_icon_t || volume_t || js_ready_t) {
@@ -1024,13 +1019,13 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
                           (!prev_NightTheme && settings.NightTheme) ||
                           (settings.updateCoordinates && (settings.ShowSun || settings.ShowMoon || settings.NightTheme));
     settings.requestWeather = settings.requestWeather || 
-                              (((prev_TemperatureUnit != settings.TemperatureUnit) || !prev_ShowWeather || settings.updateCoordinates) && settings.ShowWeather);
+                              ((!prev_ShowWeather || settings.updateCoordinates) && settings.ShowWeather);
     settings.requestBattery = (!prev_ShowPhoneBattery && settings.ShowPhoneBattery);
     settings.unsibscribeBattery = (prev_ShowPhoneBattery && !settings.ShowPhoneBattery);
     if (settings.requestSun || settings.requestWeather || settings.requestBattery || settings.unsibscribeBattery || settings.updateCoordinates) {
       request_js();
     }
-  } else if (temp_tuple || conditions_tuple || sunrise_tuple || sunset_tuple || moon_tuple || battery_tuple || charging_tuple) {
+  } else if (temp_tuple || condition_tuple || sunrise_tuple || sunset_tuple || moon_tuple || battery_tuple || charging_tuple) {
     prv_save_settings();
   }
 }

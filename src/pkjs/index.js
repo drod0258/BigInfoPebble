@@ -311,13 +311,18 @@ function subscribeToWeather() {
         console.log('Weather unavailable');
         return;
       }
-
       console.log('temperature: ' + JSON.stringify(temperature));
       console.log('condition: ' + JSON.stringify(condition));
 
+      if (temperature.numericValue.unit === "°C") {
+        var temperatureUnit = 0;
+      } else {
+        var temperatureUnit = 1;
+      }
       latestWeather = {
         'TEMPERATURE': temperature.numericValue.value,
-        'CONDITIONS': weatherConditionToCode(condition.longText.text)
+        'TEMPERATURE_UNIT': temperatureUnit,
+        'CONDITION': weatherConditionToCode(condition.longText.text)
       };
       sendWeather();
     },

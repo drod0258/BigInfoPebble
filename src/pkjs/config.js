@@ -317,12 +317,6 @@ module.exports = [
         "defaultValue": false
       },
       {
-        "type": "toggle",
-        "messageKey": "TemperatureUnit",
-        "label": "Use Fahrenheit",
-        "defaultValue": false
-      },
-      {
         "type": "slider",
         "messageKey": "WeatherInterval",
         "label": "Weather Update Interval (hours)",
