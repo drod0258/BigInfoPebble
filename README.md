@@ -5,18 +5,22 @@ A simple, clean Pebble watchface with a large, easy-to-read font. Displays the e
 ## Features
 
 - **Large time display** -- tall bold font, 12 or 24-hour format
-- **Custom color options** -- configurable backlight, background and text colors. Optionally switches colors based on sunrise/sunset
+- **Custom color options** -- configurable background, text, and icon colors. Optionally switch day/night palettes at sunrise and sunset
 - **Date** -- year, day, month, date, and ISO 8601 date
 - **Step counter** -- today's steps via Pebble Health
-- **Heartrate** -- beats per mintute via Pebble Health
-- **Weather** -- current temperature and conditions via [Open-Meteo](https://open-meteo.com/) (no API key required), with configurable temperature unit and update interval
-- **Sunrise & sunset times** -- sun times from your location. Uses times from [Open-Meteo](https://open-meteo.com/) if weather is enabled, otherwise calculated on device
-- **Custom location** -- specify manual latitude and longitude coordinates, or use phone's GPS for location
-- **Moon phase** -- 29-phase moon icon and weather conditions use the [weather-icons](https://github.com/erikflowers/weather-icons) font
+- **Heart rate** -- beats per minute via Pebble Health
+- **Weather** -- current temperature and conditions from a compatible Pebble data plugin. Location, units, and update timing are handled by the plugin provider
+- **Sunrise & sunset** -- sun times from a compatible Pebble data plugin
+- **Moon phase** -- lunar phase from a compatible Pebble data plugin
+- **Weather and moon icons** -- uses the [weather-icons](https://github.com/erikflowers/weather-icons) font
 - **Watch battery meter** -- color-coded bar (green/yellow/red) with fallback to black and white
-- **Phone battery meter** -- reports the connected phone's battery life from supported devices
-- **Bluetooth notification** -- icon and optional vibration and/or sound alert on disconnect
-- **Hourly notification** -- optional periodic vibration and/or sound
+- **Phone battery meter** -- battery level from the Pebble phone-state data source
+- **Bluetooth disconnect notification** -- optional icon and sound alert
+- **Hourly notification** -- optional sound alert
+
+Weather, sunrise/sunset, moon-phase, and phone-battery data appear only when compatible plugin data sources are available.
+
+Compatible sun and moon providers include [Astronomy](https://apps.repebble.com/astronomy_b3e402976f744fdb8d162af0) and [Moon & Sky](https://apps.repebble.com/moon-sky_6f8831d6515e4603bb3f3370). Pebble's built-in weather plugin can also provide sunrise/sunset data.
 
 ## Want to try it?
 Download on the Pebble store: https://apps.repebble.com/5eda31d774a34edeb1c87a39

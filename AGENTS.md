@@ -32,12 +32,14 @@ If you need more information on the `pebble` command or a sub-command, append `-
 
 ## Verify your work
 
-After every change, build, install, look at the result and read the logs. Do not stop at a successful build.
+Run checks appropriate to the change. Non-functional-only edits that cannot affect app behavior or appearance—such as README/documentation or comment edits—do not require a build or emulator testing.
+
+For functional app changes, build and validate on the `emery` emulator; do not stop at a successful build. Inspect a screenshot for changes that affect the watchface's appearance, and review logs for changes that affect runtime behavior.
 
 ```bash
 pebble build
-pebble install --emulator emery --logs   # streams APP_LOG output; Ctrl-C once the app is up
-pebble screenshot --scale 6 --no-open screenshot.png   # then view screenshot.png
+pebble install --emulator emery --logs   # for runtime changes; streams APP_LOG output
+pebble screenshot --scale 6 --no-open screenshot.png   # for visual changes; then view screenshot.png
 ```
 
 `pebble logs --emulator emery` streams until Ctrl-C, so run it in a second terminal or in the background while you interact with the app, and stop it before moving on.
@@ -94,9 +96,9 @@ Key Entry Points:
 
 ## Development Best Practices
 
-- Whenever making changes, run `pebble screenshot --scale 6 --no-open screenshot.png` and view the screenshot to make sure it's what the user requested. If not, make more changes until it does what it's supposed to.
+- For changes that affect the watchface's appearance, run `pebble screenshot --scale 6 --no-open screenshot.png` and inspect it against the user's request. No screenshot is needed for non-functional-only edits such as README or comment changes.
 - Use `./debug.sh enable` to preview optional fields with mock step/heart-rate values; weather and sun still use the configured location/network, and heart-rate display must be enabled separately. Run `./debug.sh disable` after testing and inspect `git diff`: it edits `src/c/main.c` and `src/pkjs/index.js` in place, resetting hard-coded defaults rather than restoring prior values.
 
 ## AI Code Review Guidelines
 
-- Once you think you've fulfilled the user's request, ask yourself if you see any issues with the current screenshot, and if there are any differences between the screenshot and the reference image or the user's description. If so, fix them.
+- For visual changes, check the screenshot for issues or differences from the reference image or user's description, and fix them before finishing.
