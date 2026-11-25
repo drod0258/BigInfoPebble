@@ -61,10 +61,10 @@ function phaseDirectionFromText(text) {
   if (phase.indexOf('new') !== -1) return 'new';
   if (phase.indexOf('full') !== -1) return 'full';
   if (phase.indexOf('waxing') !== -1 ||
-      phase.indexOf('first quarter') !== -1) return 'waxing';
+      phase.indexOf('first') !== -1) return 'waxing';
   if (phase.indexOf('waning') !== -1 ||
-      phase.indexOf('third quarter') !== -1 ||
-      phase.indexOf('last quarter') !== -1) return 'waning';
+      phase.indexOf('third') !== -1 ||
+      phase.indexOf('last') !== -1) return 'waning';
   return null;
 }
 
@@ -160,22 +160,21 @@ function subscribeToWeather() {
         console.log('Weather unavailable');
         return;
       }
-      console.log('temperature: ' + JSON.stringify(temperature));
-      console.log('condition: ' + JSON.stringify(condition));
+      // useful debug logs showing source data format
+      //console.log('temperature: ' + JSON.stringify(temperature));
+      //console.log('condition: ' + JSON.stringify(condition));
 
       if (temperature.numericValue.unit === "°C") {
         var temperatureUnit = 0;
       } else {
         var temperatureUnit = 1;
       }
-      console.log('weather: ' + temperature.numericValue.value);
-      console.log('weatherUnit: ' + temperatureUnit);
-      console.log('weatherCondition: ' + weatherConditionToCode(condition.longText.text));
       latestWeather = {
         'TEMPERATURE': temperature.numericValue.value,
         'TEMPERATURE_UNIT': temperatureUnit,
         'CONDITION': weatherConditionToCode(condition.longText.text)
       };
+      console.log(latestWeather);
       sendWeather();
     },
     onError: function(err) {
@@ -201,11 +200,13 @@ function subscribeToBattery() {
         console.log('Battery unavailable');
         return;
       }
-      console.log('battery_level: ' + JSON.stringify(battery_level));
-      console.log('battery: ' + battery_level.numericValue.value);
+      // useful debug logs showing source data format
+      //console.log('battery_level: ' + JSON.stringify(battery_level));
+
       latestBattery = {
         "BATTERY": battery_level.numericValue.value,
       };
+      console.log(latestBattery);
       sendBattery();
     },
     onError: function(err) {
@@ -270,8 +271,9 @@ function subscribeToSun() {
         console.log('Sun data unavailable');
         return;
       }
-      console.log('sunrise: ' + JSON.stringify(sunrise));
-      console.log('sunset: ' + JSON.stringify(sunset));
+      // useful debug logs showing source data format
+      //console.log('sunrise: ' + JSON.stringify(sunrise));
+      //console.log('sunset: ' + JSON.stringify(sunset));
 
       var sunriseDate = new Date(sunrise.timestamp.value * 1000);
       var sunriseHour = sunriseDate.getHours();
@@ -283,11 +285,11 @@ function subscribeToSun() {
       var sunsetMinute = sunsetDate.getMinutes();
       var sunsetTime = sunsetHour * 100 + sunsetMinute;
 
-      console.log('sun: ' + sunriseTime + '/' + sunsetTime);
       latestSun = {
         'SUNRISE': sunriseTime,
         'SUNSET': sunsetTime
       };
+      console.log(latestSun);
       sendSun();
     },
     onError: function(err) {
@@ -347,21 +349,22 @@ function subscribeToMoon() {
       var phase = here.properties.phase;
       var illumination = here.properties.illumination;
     
-      if (!phase || !phase.shortText ||
+      if (!phase || !phase.longText ||
           !illumination || !illumination.numericValue) {
         console.log('Moon phase unavailable');
         return;
       }
-      console.log('moon phase: ' + JSON.stringify(phase));
-      console.log('moon illumination: ' + JSON.stringify(illumination));
+      // useful debug logs showing source data format
+      //console.log('moon phase: ' + JSON.stringify(phase));
+      //console.log('moon illumination: ' + JSON.stringify(illumination));
 
-      var moonPhase = phaseIndexFromIllumination(illumination.numericValue, phase.shortText);
+      var moonPhase = phaseIndexFromIllumination(illumination.numericValue, phase.longText);
       if (moonPhase === null) {
         console.log('Moon phase unavailable');
         return;
       }
-      console.log('moon: ' + moonPhase);
       latestMoon = { 'MOONPHASE': moonPhase };
+      console.log(latestMoon);
       sendMoon();
     },
     onError: function(err) {
