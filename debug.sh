@@ -26,19 +26,14 @@ case "$1" in
         sed -i 's/settings\.ShowDate = false;/settings\.ShowDate = true;/g' "$MAIN_C"
         sed -i 's/settings\.ShowDate2 = false;/settings\.ShowDate2 = true;/g' "$MAIN_C"
         sed -i 's/settings\.ShowWeather = false;/settings\.ShowWeather = true;/g' "$MAIN_C"
-        sed -i 's/settings\.TemperatureUnit = false;/settings\.TemperatureUnit = true;/g' "$MAIN_C"
         sed -i 's/settings\.ShowSteps = false;/settings\.ShowSteps = true;/g' "$MAIN_C"
         sed -i 's/settings\.ShowSun = false;/settings\.ShowSun = true;/g' "$MAIN_C"
         sed -i 's/settings\.ShowMoon = false;/settings\.ShowMoon = true;/g' "$MAIN_C"
-        sed -i 's/settings\.WeatherInterval = 3;/settings\.WeatherInterval = 1;/g' "$MAIN_C"
 
         # 2. Inject mock step count and heart rate values into main.c
         # Uses standard sed 'a' command to append a line after a specific pattern
         sed -i '/int step_count = (int)health_service_sum_today(HealthMetricStepCount);/a \ \ \ \ step_count = 23456;' "$MAIN_C"
         sed -i '/int hr = (int)health_service_peek_current_value(HealthMetricHeartRateBPM);/a \ \ \ \ hr = 72;' "$MAIN_C"
-
-        # 3. Uncomment functions in index.js
-        sed -i 's/\/\/getSunInfo();/getSunInfo();/g' "$INDEX_JS"
         
         echo "Done!"
         ;;
@@ -50,20 +45,13 @@ case "$1" in
         sed -i 's/settings\.ShowDate = true;/settings\.ShowDate = false;/g' "$MAIN_C"
         sed -i 's/settings\.ShowDate2 = true;/settings\.ShowDate2 = false;/g' "$MAIN_C"
         sed -i 's/settings\.ShowWeather = true;/settings\.ShowWeather = false;/g' "$MAIN_C"
-        sed -i 's/settings\.TemperatureUnit = true;/settings\.TemperatureUnit = false;/g' "$MAIN_C"
         sed -i 's/settings\.ShowSteps = true;/settings\.ShowSteps = false;/g' "$MAIN_C"
         sed -i 's/settings\.ShowSun = true;/settings\.ShowSun = false;/g' "$MAIN_C"
         sed -i 's/settings\.ShowMoon = true;/settings\.ShowMoon = false;/g' "$MAIN_C"
-        sed -i 's/settings\.WeatherInterval = 1;/settings\.WeatherInterval = 3;/g' "$MAIN_C"
 
         # 2. Delete the injected mock lines from main.c
         sed -i '/step_count = 23456;/d' "$MAIN_C"
         sed -i '/hr = 72;/d' "$MAIN_C"
-
-        # 3. Comment functions back out in index.js
-        #sed -i 's/getSunInfo();/\/\/getSunInfo();/g' "$INDEX_JS"
-        #sed -i 's/getWeatherInfo();/\/\/getWeatherInfo();/g' "$INDEX_JS"
-        sed -i '/\/\/ Get the initial data/,+2 s/\(getSunInfo\)/\/\/\1/g' "$INDEX_JS"
         
         echo "Done!"
         ;;
