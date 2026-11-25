@@ -247,8 +247,15 @@ static void prv_save_settings() {
 static void prv_load_settings() {
   // Set defaults first
   prv_default_settings();
-  // Then override with any saved values
-  persist_read_data(SETTINGS_KEY, &settings, sizeof(settings));
+  // Only read saved values when they match the current struct layout
+  if (persist_get_size(SETTINGS_KEY) == sizeof(settings)) {
+    persist_read_data(SETTINGS_KEY, &settings, sizeof(settings));
+  } else {
+    // Replace missing or outdated data with defaults in the current format
+    // The config page will still retain users old settings
+    // Users just need to open the config page and re-save
+    prv_save_settings();
+  }
 }
 
 // Apply settings to UI elements
