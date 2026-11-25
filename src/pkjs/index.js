@@ -169,13 +169,19 @@ function subscribeToWeather() {
       } else {
         var temperatureUnit = 1;
       }
-      latestWeather = {
-        'TEMPERATURE': temperature.numericValue.value,
-        'TEMPERATURE_UNIT': temperatureUnit,
-        'CONDITION': weatherConditionToCode(condition.longText.text)
-      };
-      console.log(latestWeather);
-      sendWeather();
+      var weatherCode = weatherConditionToCode(condition.longText.text);
+      if (!latestWeather || 
+          latestWeather.TEMPERATURE !== temperature.numericValue.value ||
+          latestWeather.TEMPERATURE_UNIT !== temperatureUnit ||
+          latestWeather.CONDITION !== weatherCode) {
+        latestWeather = {
+          'TEMPERATURE': temperature.numericValue.value,
+          'TEMPERATURE_UNIT': temperatureUnit,
+          'CONDITION': weatherCode
+        };
+        console.log(latestWeather);
+        sendWeather();
+    }
     },
     onError: function(err) {
       console.log('Weather unavailable: ' + err.code + ' ' + err.message);
@@ -203,11 +209,11 @@ function subscribeToBattery() {
       // useful debug logs showing source data format
       //console.log('battery_level: ' + JSON.stringify(battery_level));
 
-      latestBattery = {
-        "BATTERY": battery_level.numericValue.value,
-      };
-      console.log(latestBattery);
-      sendBattery();
+      if (!latestBattery || latestBattery.BATTERY !== battery_level.numericValue.value) {
+        latestBattery = { 'BATTERY': battery_level.numericValue.value };
+        console.log(latestBattery);
+        sendBattery();
+      }
     },
     onError: function(err) {
       console.log('Weather unavailable: ' + err.code + ' ' + err.message);
@@ -285,12 +291,16 @@ function subscribeToSun() {
       var sunsetMinute = sunsetDate.getMinutes();
       var sunsetTime = sunsetHour * 100 + sunsetMinute;
 
-      latestSun = {
-        'SUNRISE': sunriseTime,
-        'SUNSET': sunsetTime
-      };
-      console.log(latestSun);
-      sendSun();
+      if (!latestSun || 
+          latestSun.SUNRISE !== sunriseTime ||
+          latestSun.SUNSET !== sunsetTime) {
+        latestSun = {
+          'SUNRISE': sunriseTime,
+          'SUNSET': sunsetTime
+        };
+        console.log(latestSun);
+        sendSun();
+      }
     },
     onError: function(err) {
       console.log('Sun data unavailable: ' + err.code + ' ' + err.message);
@@ -363,9 +373,11 @@ function subscribeToMoon() {
         console.log('Moon phase unavailable');
         return;
       }
-      latestMoon = { 'MOONPHASE': moonPhase };
-      console.log(latestMoon);
-      sendMoon();
+      if (!latestMoon || latestMoon.MOONPHASE !== moonPhase) {
+        latestMoon = { 'MOONPHASE': moonPhase };
+        console.log(latestMoon);
+        sendMoon();
+      }
     },
     onError: function(err) {
       console.log('Moon data unavailable: ' + err.code + ' ' + err.message);
