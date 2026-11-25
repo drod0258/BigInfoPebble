@@ -471,7 +471,8 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
     #if defined(PBL_SPEAKER)
       if (settings.PeriodicSound) {
         static const SpeakerNote s_single_beep_sine[] = {
-          { .midi_note = 108, .waveform = SpeakerWaveformSine,  .duration_ms = 150 },
+          { .midi_note = 0,   .waveform = SpeakerWaveformSine,  .duration_ms = 100 },
+          { .midi_note = 108, .waveform = SpeakerWaveformSine,  .duration_ms = 125 },
           { .midi_note = 0,   .waveform = SpeakerWaveformSine,  .duration_ms = 100 }
         };
         speaker_play_notes(s_single_beep_sine, ARRAY_LENGTH(s_single_beep_sine), settings.Volume);
@@ -533,9 +534,10 @@ static void bluetooth_callback(bool connected) {
     #if defined(PBL_SPEAKER)
       if (settings.BluetoothSound) {
         static const SpeakerNote s_double_beep_sawtooth[] = {
-          { .midi_note = 96, .waveform = SpeakerWaveformSawtooth,  .duration_ms = 150 },
           { .midi_note = 0,   .waveform = SpeakerWaveformSawtooth,  .duration_ms = 100 },
-          { .midi_note = 96, .waveform = SpeakerWaveformSawtooth,  .duration_ms = 150 },
+          { .midi_note = 96, .waveform = SpeakerWaveformSawtooth,  .duration_ms = 125 },
+          { .midi_note = 0,   .waveform = SpeakerWaveformSawtooth,  .duration_ms = 100 },
+          { .midi_note = 96, .waveform = SpeakerWaveformSawtooth,  .duration_ms = 125 },
           { .midi_note = 0,   .waveform = SpeakerWaveformSawtooth,  .duration_ms = 100 }
         };
         speaker_play_notes(s_double_beep_sawtooth, ARRAY_LENGTH(s_double_beep_sawtooth), settings.Volume);
