@@ -5,22 +5,13 @@ var clayConfig = require('./config');
 // Initialize Clay
 var clay = new Clay(clayConfig);
 
-// Helper function for XMLHttpRequest
-var xhrRequest = function (url, type, callback) {
-  var xhr = new XMLHttpRequest();
-  xhr.onload = function () {
-    callback(this.responseText);
-  };
-  xhr.open(type, url);
-  xhr.send();
-};
-
-// start plugins
+// plugin variables
 var latestWeather = null;
 var latestBattery = null;
 var latestSun = null;
 var latestMoon = null;
 
+// plugin helper functions
 function weatherConditionToCode(condition) {
   if (condition === "sun") return 0;
   if (condition === "partly_cloudy") return 1;
@@ -87,6 +78,7 @@ function phaseIndexFromIllumination(illumination, phaseText) {
   return Math.max(0, Math.min(28, Math.round(phase * 28)));
 }
 
+// send data functions
 function sendWeather() {
   if (!latestWeather) {
     return;
@@ -140,6 +132,7 @@ function sendMoon() {
   );
 }
 
+// plugin subscription functions
 function subscribeToWeather() {
   Pebble.subscribeToSource({
     category: 'weather',
@@ -188,6 +181,7 @@ function subscribeToWeather() {
     }
   });
 }
+
 function subscribeToBattery() {
   Pebble.subscribeToSource({
     category: 'phone',
@@ -220,7 +214,9 @@ function subscribeToBattery() {
     }
   });
 }
+
 function subscribeToSun() {
+  // find a plugin that provides sun timestamps
   var sourcePriority = [
     { category: 'astronomy', item: 'sun' },
     { category: 'weather', item: 'sun' },
@@ -228,7 +224,6 @@ function subscribeToSun() {
   ];
   var availablePlugins = Pebble.enumeratePlugins() || [];
   var selectedSource = null;
-
   for (var i = 0; i < sourcePriority.length && !selectedSource; i++) {
     var preferred = sourcePriority[i];
     for (var j = 0; j < availablePlugins.length && !selectedSource; j++) {
@@ -252,13 +247,13 @@ function subscribeToSun() {
       }
     }
   }
-
   if (!selectedSource) {
     console.log('No compatible sun plugin found!');
     return;
   }
-
   console.log('Using ' + selectedSource.plugin.name + "'s " + selectedSource.category + '/' + selectedSource.item + ' for sun data');
+  
+  // subscribe to selected sun plugin
   Pebble.subscribeToSource({
     category: selectedSource.category,
     item: selectedSource.item,
@@ -270,6 +265,8 @@ function subscribeToSun() {
         console.log('Sun data unavailable');
         return;
       }
+
+      // Any property can be missing, so check before using it
       var sunrise = here.properties.sunrise
       var sunset = here.properties.sunset
       if (!sunrise || !sunrise.timestamp ||
@@ -281,11 +278,13 @@ function subscribeToSun() {
       //console.log('sunrise: ' + JSON.stringify(sunrise));
       //console.log('sunset: ' + JSON.stringify(sunset));
 
+      // convert timestamps to HHMM format
+      // sunrise
       var sunriseDate = new Date(sunrise.timestamp.value * 1000);
       var sunriseHour = sunriseDate.getHours();
       var sunriseMinute = sunriseDate.getMinutes();
       var sunriseTime = sunriseHour * 100 + sunriseMinute;
-
+      // sunset
       var sunsetDate = new Date(sunset.timestamp.value * 1000);
       var sunsetHour = sunsetDate.getHours();
       var sunsetMinute = sunsetDate.getMinutes();
@@ -307,14 +306,15 @@ function subscribeToSun() {
     }
   });
 }
+
 function subscribeToMoon() {
+  // find a plugin that provides moon illumination and phase
   var sourcePriority = [
     { category: 'astronomy', item: 'moon' },
     { category: 'weather', item: 'moon' }
   ];
   var availablePlugins = Pebble.enumeratePlugins() || [];
   var selectedSource = null;
-
   for (var i = 0; i < sourcePriority.length && !selectedSource; i++) {
     var preferred = sourcePriority[i];
     for (var j = 0; j < availablePlugins.length && !selectedSource; j++) {
@@ -338,13 +338,13 @@ function subscribeToMoon() {
       }
     }
   }
-
   if (!selectedSource) {
     console.log('No compatible moon plugin found!');
     return;
   }
-
   console.log('Using ' + selectedSource.plugin.name + "'s " + selectedSource.category + '/' + selectedSource.item + ' for moon data');
+  
+  // subscribe to selected moon plugin
   Pebble.subscribeToSource({
     category: selectedSource.category,
     item: selectedSource.item,
@@ -356,9 +356,10 @@ function subscribeToMoon() {
         console.log('Moon phase unavailable');
         return;
       }
+
+      // Any property can be missing, so check before using it
       var phase = here.properties.phase;
       var illumination = here.properties.illumination;
-    
       if (!phase || !phase.longText ||
           !illumination || !illumination.numericValue) {
         console.log('Moon phase unavailable');
@@ -368,6 +369,7 @@ function subscribeToMoon() {
       //console.log('moon phase: ' + JSON.stringify(phase));
       //console.log('moon illumination: ' + JSON.stringify(illumination));
 
+      // convert phase to an index (0-28; 0 = new, 14 = full)
       var moonPhase = phaseIndexFromIllumination(illumination.numericValue, phase.longText);
       if (moonPhase === null) {
         console.log('Moon phase unavailable');
