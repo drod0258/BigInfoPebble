@@ -20,16 +20,6 @@ module.exports = [
       },
       {
         "type": "color",
-        "messageKey": "BacklightColorDay",
-        "label": "Backglight Color",
-        "defaultValue": "0xFFAA55",
-        "sunlight": false,
-        "layout": "COLOR",
-        "description": "Set backlight to BLACK to use the system default",
-        "capabilities": ["PLATFORM_EMERY"]
-      },
-      {
-        "type": "color",
         "messageKey": "BackgroundColorDay",
         "label": "Background Color",
         "defaultValue": "0xFFFFFF",
@@ -133,16 +123,6 @@ module.exports = [
         "messageKey": "NightTheme",
         "label": "Enable Night Theme After Sunset",
         "defaultValue": false
-      },
-      {
-        "type": "color",
-        "messageKey": "BacklightColorNight",
-        "label": "Night Backglight Color",
-        "defaultValue": "0xFF5500",
-        "sunlight": false,
-        "layout": "COLOR",
-        "description": "Set backlight to BLACK to use the system default",
-        "capabilities": ["PLATFORM_EMERY"]
       },
       {
         "type": "color",
@@ -363,12 +343,6 @@ module.exports = [
       },
       {
         "type": "toggle",
-        "messageKey": "PeriodicVibrate",
-        "label": "  - Vibrate",
-        "defaultValue": false
-      },
-      {
-        "type": "toggle",
         "messageKey": "PeriodicSound",
         "label": "  - Sound",
         "defaultValue": false,
@@ -386,26 +360,9 @@ module.exports = [
       },
       {
         "type": "toggle",
-        "messageKey": "BluetoothVibrate",
-        "label": "  - Vibrate",
-        "defaultValue": false
-      },
-      {
-        "type": "toggle",
         "messageKey": "BluetoothSound",
         "label": "  - Sound",
         "defaultValue": false,
-        "capabilities": ["NOT_PLATFORM_APLITE", "NOT_PLATFORM_BASALT", "NOT_PLATFORM_CHALK", "NOT_PLATFORM_DIORITE", "NOT_PLATFORM_GABBRO"]
-      },
-      {
-        "type": "slider",
-        "messageKey": "Volume",
-        "label": "Speaker Volume",
-        "description": "Set volume to `0` to use the system default",
-        "defaultValue": 50,
-        "min": 0,
-        "max": 100,
-        "step": 5,
         "capabilities": ["NOT_PLATFORM_APLITE", "NOT_PLATFORM_BASALT", "NOT_PLATFORM_CHALK", "NOT_PLATFORM_DIORITE", "NOT_PLATFORM_GABBRO"]
       }
     ]

@@ -6,7 +6,6 @@
 // Define our settings struct
 typedef struct ClaySettings {
   // user settings
-  int BacklightColor;
   GColor BackgroundColor;
   GColor TimeColor;
   GColor DateColor;
@@ -21,7 +20,6 @@ typedef struct ClaySettings {
   GColor BatteryLowColor;
   int BatteryMidPercent;
   int BatteryLowPercent;
-  int BacklightColorDay;
   GColor BackgroundColorDay;
   GColor TextColorDay;
   GColor TimeColorDay;
@@ -35,7 +33,6 @@ typedef struct ClaySettings {
   GColor BatteryFullColorDay;
   GColor BatteryMidColorDay;
   GColor BatteryLowColorDay;
-  int BacklightColorNight;
   GColor BackgroundColorNight;
   GColor TextColorNight;
   GColor TimeColorNight;
@@ -60,12 +57,9 @@ typedef struct ClaySettings {
   bool ShowMoon;
   bool ShowWatchBattery;
   bool ShowPhoneBattery;
-  bool PeriodicVibrate;
   bool PeriodicSound;
-  bool BluetoothVibrate;
   bool BluetoothSound;
   bool BluetoothIcon;
-  int Volume;
   // storage
   bool IsDay;
   int SunriseTime;
@@ -113,7 +107,6 @@ static Layer *s_window_layer;
 // Set default settings
 static void prv_default_settings() {
   // user settings
-  settings.BacklightColorDay = 0xFFAA55;
   settings.BackgroundColorDay = GColorWhite;
   settings.TextColorDay = GColorBlack;
   settings.TimeColorDay = GColorBlack;
@@ -127,7 +120,6 @@ static void prv_default_settings() {
   settings.BatteryFullColorDay = GColorGreen;
   settings.BatteryMidColorDay = GColorChromeYellow;
   settings.BatteryLowColorDay = GColorRed;
-  settings.BacklightColorNight = 0xFF5500;
   settings.BackgroundColorNight = GColorBlack;
   settings.TextColorNight = GColorWhite;
   settings.TimeColorNight = GColorWhite;
@@ -141,7 +133,6 @@ static void prv_default_settings() {
   settings.BatteryFullColorNight = GColorGreen;
   settings.BatteryMidColorNight = GColorChromeYellow;
   settings.BatteryLowColorNight = GColorRed;
-  settings.BacklightColor = settings.BacklightColorDay;
   settings.BackgroundColor = settings.BackgroundColorDay;
   settings.TimeColor = settings.TimeColorDay;
   settings.DateColor = settings.DateColorDay;
@@ -167,12 +158,9 @@ static void prv_default_settings() {
   settings.ShowMoon = false;
   settings.ShowWatchBattery = true;
   settings.ShowPhoneBattery = false;
-  settings.PeriodicVibrate = false;
   settings.PeriodicSound = false;
-  settings.BluetoothVibrate = false;
   settings.BluetoothSound = false;
   settings.BluetoothIcon = true;
-  settings.Volume = 50;
   // storage
   settings.IsDay=false;
   settings.SunriseTime=1;
@@ -261,7 +249,6 @@ static void prv_load_settings() {
 // Apply settings to UI elements
 static void prv_update_display() {
   if (settings.NightTheme && !settings.IsDay) {
-    settings.BacklightColor = settings.BacklightColorNight;
     settings.BackgroundColor = settings.BackgroundColorNight;
     settings.TimeColor = PBL_IF_COLOR_ELSE(settings.TimeColorNight, settings.TextColorNight);
     settings.DateColor = PBL_IF_COLOR_ELSE(settings.DateColorNight, settings.TextColorNight);
@@ -276,7 +263,6 @@ static void prv_update_display() {
     settings.BatteryLowColor = PBL_IF_COLOR_ELSE(settings.BatteryLowColorNight, settings.TextColorNight);
   }
   else {
-    settings.BacklightColor = settings.BacklightColorDay;
     settings.BackgroundColor = settings.BackgroundColorDay;
     settings.TimeColor = PBL_IF_COLOR_ELSE(settings.TimeColorDay, settings.TextColorDay);
     settings.DateColor = PBL_IF_COLOR_ELSE(settings.DateColorDay, settings.TextColorDay);
@@ -290,15 +276,6 @@ static void prv_update_display() {
     settings.BatteryMidColor = PBL_IF_COLOR_ELSE(settings.BatteryMidColorDay, settings.TextColorDay);
     settings.BatteryLowColor = PBL_IF_COLOR_ELSE(settings.BatteryLowColorDay, settings.TextColorDay);
   }
-
-  #if defined(PBL_RGB_BACKLIGHT)
-    // If color is set to black use system default color, else set the backlight color
-    if (settings.BacklightColor == 0x000000) {
-      light_set_system_color();
-    } else {
-      light_set_color_rgb888(settings.BacklightColor);
-    }
-  #endif
 
   // Set background color
   window_set_background_color(s_main_window, settings.BackgroundColor);
@@ -465,9 +442,6 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   // run every hour
   if (tick_time->tm_min % 60 == 0) {
     update_date();
-    if (settings.PeriodicVibrate) {
-      vibes_double_pulse();
-    }
     #if defined(PBL_SPEAKER)
       if (settings.PeriodicSound) {
         static const SpeakerNote s_single_beep_sine[] = {
@@ -475,7 +449,7 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
           { .midi_note = 108, .waveform = SpeakerWaveformSine,  .duration_ms = 125 },
           { .midi_note = 0,   .waveform = SpeakerWaveformSine,  .duration_ms = 100 }
         };
-        speaker_play_notes(s_single_beep_sine, ARRAY_LENGTH(s_single_beep_sine), settings.Volume);
+        speaker_play_notes(s_single_beep_sine, ARRAY_LENGTH(s_single_beep_sine), 100);
       }
     #endif
   }
@@ -528,9 +502,6 @@ static void bluetooth_callback(bool connected) {
   layer_set_hidden(text_layer_get_layer(s_bt_icon_layer), ((connected && settings.BluetoothIcon) || !settings.BluetoothIcon));
   if (!connected) {
     //phone was disconnected
-    if (settings.BluetoothVibrate) {
-      vibes_long_pulse();
-    }
     #if defined(PBL_SPEAKER)
       if (settings.BluetoothSound) {
         static const SpeakerNote s_double_beep_sawtooth[] = {
@@ -540,7 +511,7 @@ static void bluetooth_callback(bool connected) {
           { .midi_note = 96, .waveform = SpeakerWaveformSawtooth,  .duration_ms = 125 },
           { .midi_note = 0,   .waveform = SpeakerWaveformSawtooth,  .duration_ms = 100 }
         };
-        speaker_play_notes(s_double_beep_sawtooth, ARRAY_LENGTH(s_double_beep_sawtooth), settings.Volume);
+        speaker_play_notes(s_double_beep_sawtooth, ARRAY_LENGTH(s_double_beep_sawtooth), 100);
       }
     #endif
   }
@@ -562,10 +533,6 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   }
 
   // Check for Clay settings data
-  Tuple *bl_color_day_t = dict_find(iterator, MESSAGE_KEY_BacklightColorDay);
-  if (bl_color_day_t) {
-    settings.BacklightColorDay = bl_color_day_t->value->int32;
-  }
   Tuple *bg_color_day_t = dict_find(iterator, MESSAGE_KEY_BackgroundColorDay);
   if (bg_color_day_t) {
     settings.BackgroundColorDay = GColorFromHEX(bg_color_day_t->value->int32);
@@ -617,10 +584,6 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   Tuple *battery_low_color_day_t = dict_find(iterator, MESSAGE_KEY_BatteryLowColorDay);
   if (battery_low_color_day_t) {
     settings.BatteryLowColorDay = GColorFromHEX(battery_low_color_day_t->value->int32);
-  }
-  Tuple *bl_color_night_t = dict_find(iterator, MESSAGE_KEY_BacklightColorNight);
-  if (bl_color_night_t) {
-    settings.BacklightColorNight = bl_color_night_t->value->int32;
   }
   Tuple *bg_color_night_t = dict_find(iterator, MESSAGE_KEY_BackgroundColorNight);
   if (bg_color_night_t) {
@@ -732,17 +695,9 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   if (battery_low_percent_t) {
     settings.BatteryLowPercent = (int)battery_low_percent_t->value->int32;
   }
-  Tuple *periodic_vibrate_t = dict_find(iterator, MESSAGE_KEY_PeriodicVibrate);
-  if (periodic_vibrate_t) {
-    settings.PeriodicVibrate = periodic_vibrate_t->value->int32 == 1;
-  }
   Tuple *periodic_sound_t = dict_find(iterator, MESSAGE_KEY_PeriodicSound);
   if (periodic_sound_t) {
     settings.PeriodicSound = periodic_sound_t->value->int32 == 1;
-  }
-  Tuple *bluetooth_vibrate_t = dict_find(iterator, MESSAGE_KEY_BluetoothVibrate);
-  if (bluetooth_vibrate_t) {
-    settings.BluetoothVibrate = bluetooth_vibrate_t->value->int32 == 1;
   }
   Tuple *bluetooth_sound_t = dict_find(iterator, MESSAGE_KEY_BluetoothSound);
   if (bluetooth_sound_t) {
@@ -751,10 +706,6 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   Tuple *bluetooth_icon_t = dict_find(iterator, MESSAGE_KEY_BluetoothIcon);
   if (bluetooth_icon_t) {
     settings.BluetoothIcon = bluetooth_icon_t->value->int32 == 1;
-  }
-  Tuple *volume_t = dict_find(iterator, MESSAGE_KEY_Volume);
-  if (volume_t) {
-    settings.Volume = (int)volume_t->value->int32;
   }
 
   // Check for weather data
@@ -803,8 +754,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 
   // Save and apply if any settings were changed
   if (
-    bg_color_day_t || bg_color_night_t || night_theme_t || 
-    text_color_day_t || text_color_night_t || bl_color_day_t || bl_color_night_t ||
+    bg_color_day_t || bg_color_night_t || night_theme_t || text_color_day_t || text_color_night_t || 
     time_color_day_t || date_color_day_t || weather_color_day_t || health_color_day_t || 
     sun_color_day_t || moon_color_day_t || battery_outline_color_day_t || battery_charging_color_day_t || 
     battery_full_color_day_t || battery_mid_color_day_t || battery_low_color_day_t || 
@@ -813,8 +763,8 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     battery_full_color_night_t || battery_mid_color_night_t || battery_low_color_night_t || 
     show_date_t || show_date2_t || alt_date_t || show_steps_t || show_hr_t || 
     show_weather_t || show_sun_t || show_moon_t || battery_mid_percent_t || battery_low_percent_t || 
-    show_phone_battery_t || show_watch_battery_t || periodic_vibrate_t || periodic_sound_t || 
-    bluetooth_vibrate_t || bluetooth_sound_t || bluetooth_icon_t || volume_t || js_ready_t) {
+    show_phone_battery_t || show_watch_battery_t || periodic_sound_t || 
+    bluetooth_sound_t || bluetooth_icon_t || js_ready_t) {
     
     // resize battery layers if watch or phone battery was toggled
     if ((prev_ShowWatchBattery != settings.ShowWatchBattery) || (prev_ShowPhoneBattery != settings.ShowPhoneBattery)) {
