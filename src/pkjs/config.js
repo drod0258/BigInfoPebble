@@ -338,13 +338,6 @@ module.exports = [
         "defaultValue": false
       },
       {
-        "type": "toggle",
-        "messageKey": "ShowCharging",
-        "label": "Show Battery Charging Color",
-        "defaultValue": false,
-        "capabilities": ["COLOR"]
-      },
-      {
         "type": "slider",
         "messageKey": "BatteryMidPercent",
         "label": "Battery Mid Threshold",

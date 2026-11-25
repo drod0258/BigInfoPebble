@@ -410,6 +410,9 @@ Pebble.addEventListener('appmessage',
     // Check if this is a sun info refresh request
     if (dict['REQUEST_SUN']) {
       sendSun();
+    }
+    // Check if this is a moon info refresh request
+    if (dict['REQUEST_MOON']) {
       sendMoon();
     }
     // Check if this is a weather refresh request
@@ -418,15 +421,7 @@ Pebble.addEventListener('appmessage',
     }
     // Check if this is a battery refresh request
     if (dict['REQUEST_BATTERY']) {
-      var batteryToggle = 1;
-      localStorage.setItem('phoneBatteryEnabled', batteryToggle);
       sendBattery();
-    }
-    // Check if this is a battery unsubscribe request
-    if (dict['UNSUBSCRIBE_BATTERY']) {
-      var batteryToggle = 0;
-      localStorage.setItem('phoneBatteryEnabled', batteryToggle);
-      stopBattery();
     }
   }
 );

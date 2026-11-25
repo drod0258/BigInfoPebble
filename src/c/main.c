@@ -21,7 +21,6 @@ typedef struct ClaySettings {
   GColor BatteryLowColor;
   int BatteryMidPercent;
   int BatteryLowPercent;
-  bool ShowCharging;
   int BacklightColorDay;
   GColor BackgroundColorDay;
   GColor TextColorDay;
@@ -77,11 +76,6 @@ typedef struct ClaySettings {
   int WeatherIcon;
   int PhoneBattery;
   bool PhoneCharging;
-  bool requestSun;
-  bool requestWeather;
-  bool requestBattery;
-  bool unsibscribeBattery;
-  bool requestJS;
 } ClaySettings;
 
 // An instance of the struct
@@ -162,7 +156,6 @@ static void prv_default_settings() {
   settings.BatteryLowColor = settings.BatteryLowColorDay;
   settings.BatteryMidPercent = 40;
   settings.BatteryLowPercent = 20;
-  settings.ShowCharging = false;
   settings.NightTheme = false;
   settings.ShowDate = false;
   settings.ShowDate2 = false;
@@ -190,11 +183,6 @@ static void prv_default_settings() {
   settings.WeatherIcon=8;
   settings.PhoneBattery=0;
   settings.PhoneCharging=false;
-  settings.requestSun=false;
-  settings.requestWeather=false;
-  settings.requestBattery=false;
-  settings.unsibscribeBattery=false;
-  settings.requestJS=false;
 }
 
 static char* weather_condition[] = {
@@ -460,29 +448,6 @@ static void update_moon() {
   text_layer_set_text(s_moon_layer, moon_phase[settings.MoonPhase]);
 }
 
-static void request_js() {
-  DictionaryIterator *iter;
-  app_message_outbox_begin(&iter);
-  if (settings.requestSun) {
-    dict_write_uint8(iter, MESSAGE_KEY_REQUEST_SUN, 1);
-    settings.requestSun = false;
-  }
-  if (settings.requestWeather) {
-    dict_write_uint8(iter, MESSAGE_KEY_REQUEST_WEATHER, 1);
-    settings.requestWeather = false;
-  }
-  if (settings.requestBattery) {
-    dict_write_uint8(iter, MESSAGE_KEY_REQUEST_BATTERY, 1);
-    settings.requestBattery = false;
-  }
-  if (settings.unsibscribeBattery) {
-    dict_write_uint8(iter, MESSAGE_KEY_UNSUBSCRIBE_BATTERY, 1);
-    settings.unsibscribeBattery = false;
-  }
-  settings.requestJS=false;
-  app_message_outbox_send();
-}
-
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   // run every minute
   update_time();
@@ -505,26 +470,6 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
         speaker_play_notes(s_single_beep_sine, ARRAY_LENGTH(s_single_beep_sine), settings.Volume);
       }
     #endif
-    // generate message request only if showing info and time matches interval
-    if (settings.ShowWeather || settings.ShowSun || settings.ShowMoon || settings.NightTheme) {
-      // Get weather update every 1-6 hours
-      if (settings.ShowWeather && tick_time->tm_hour % 1 == 0) {
-        settings.requestWeather = true;
-      }
-      // Get sun & moon info every 24 hours
-      if ((settings.ShowSun || settings.ShowMoon || settings.NightTheme) && tick_time->tm_hour % 24 == 0) {
-        settings.requestSun = true;
-      }
-      if (settings.requestWeather || settings.requestSun) {
-        // request data only if currently connected to phone
-        if (connection_service_peek_pebble_app_connection()) {
-          request_js();
-        } else {
-          settings.requestJS=true;
-          prv_save_settings();
-        }
-      }
-    }
   }
 }
 
@@ -546,7 +491,7 @@ static void battery_update_proc(Layer *layer, GContext *ctx, int battery_level, 
 
   // Choose color based on battery level
   GColor bar_color;
-  if (settings.ShowCharging && is_charging) {
+  if (is_charging) {
     bar_color = settings.BatteryChargingColor;
   } else if (battery_level <= settings.BatteryLowPercent) {
     bar_color = settings.BatteryLowColor;
@@ -597,10 +542,6 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   // Save previous values to detect actual changes
   bool prev_ShowSteps = settings.ShowSteps;
   bool prev_ShowHR = settings.ShowHR;
-  bool prev_ShowSun = settings.ShowSun;
-  bool prev_ShowMoon = settings.ShowMoon;
-  bool prev_NightTheme = settings.NightTheme;
-  bool prev_ShowWeather = settings.ShowWeather;
   bool prev_ShowWatchBattery = settings.ShowWatchBattery;
   bool prev_ShowPhoneBattery = settings.ShowPhoneBattery;
   bool prev_AltDate = settings.AltDate;
@@ -774,10 +715,6 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   if (show_phone_battery_t) {
     settings.ShowPhoneBattery = show_phone_battery_t->value->int32 == 1;
   }
-  Tuple *show_charging_t = dict_find(iterator, MESSAGE_KEY_ShowCharging);
-  if (show_charging_t) {
-    settings.ShowCharging = show_charging_t->value->int32 == 1;
-  }
   Tuple *battery_mid_percent_t = dict_find(iterator, MESSAGE_KEY_BatteryMidPercent);
   if (battery_mid_percent_t) {
     settings.BatteryMidPercent = (int)battery_mid_percent_t->value->int32;
@@ -866,8 +803,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     sun_color_night_t || moon_color_night_t || battery_outline_color_night_t || battery_charging_color_night_t || 
     battery_full_color_night_t || battery_mid_color_night_t || battery_low_color_night_t || 
     show_date_t || show_date2_t || alt_date_t || show_steps_t || show_hr_t || 
-    show_weather_t || show_sun_t || show_moon_t || 
-    show_charging_t || battery_mid_percent_t || battery_low_percent_t || 
+    show_weather_t || show_sun_t || show_moon_t || battery_mid_percent_t || battery_low_percent_t || 
     show_phone_battery_t || show_watch_battery_t || periodic_vibrate_t || periodic_sound_t || 
     bluetooth_vibrate_t || bluetooth_sound_t || bluetooth_icon_t || volume_t || js_ready_t) {
     
@@ -929,23 +865,10 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
       layer_set_frame(text_layer_get_layer(s_health_layer), GRect(health_x, health_y, health_width, (info_height + 4)));
       layer_mark_dirty(text_layer_get_layer(s_health_layer));
     }
-    
+
     prv_save_settings();
     prv_update_display();
 
-    // Request data when a setting was changed
-    settings.requestSun = settings.requestSun || 
-                          (!prev_ShowSun && settings.ShowSun) ||
-                          (!prev_ShowMoon && settings.ShowMoon) ||
-                          (!prev_NightTheme && settings.NightTheme) ||
-                          (settings.ShowSun || settings.ShowMoon || settings.NightTheme);
-    settings.requestWeather = settings.requestWeather || 
-                              (!prev_ShowWeather && settings.ShowWeather);
-    settings.requestBattery = (!prev_ShowPhoneBattery && settings.ShowPhoneBattery);
-    settings.unsibscribeBattery = (prev_ShowPhoneBattery && !settings.ShowPhoneBattery);
-    if (settings.requestSun || settings.requestWeather || settings.requestBattery || settings.unsibscribeBattery) {
-      request_js();
-    }
   } else if (temp_tuple || condition_tuple || sunrise_tuple || sunset_tuple || moon_tuple || battery_tuple || charging_tuple) {
     prv_save_settings();
   }
