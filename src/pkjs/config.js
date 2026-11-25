@@ -315,42 +315,6 @@ module.exports = [
         "messageKey": "ShowWeather",
         "label": "Show Weather",
         "defaultValue": false
-      },
-      {
-        "type": "slider",
-        "messageKey": "WeatherInterval",
-        "label": "Weather Update Interval (hours)",
-        "defaultValue": 3,
-        "min": 1,
-        "max": 6,
-        "step": 1
-      },
-      {
-        "type": "input",
-        "messageKey": "Latitude",
-        "defaultValue": "",
-        "label": "Manual Location - Latitude",
-        "attributes": {
-          "placeholder": "eg: 40.7127 (leave blank to use GPS)",
-          "type": "number",
-          "min": "-90",
-          "max": "90",
-          "step": ".000001"
-        }
-      },
-      {
-        "type": "input",
-        "messageKey": "Longitude",
-        "defaultValue": "",
-        "label": "Manual Location - Longitude",
-        "description": "Leave both blank to use GPS location for weather & sun times",
-        "attributes": {
-          "placeholder": "eg: -74.0061 (leave blank to use GPS)",
-          "type": "number",
-          "min": "-180",
-          "max": "180",
-          "step": ".000001"
-        }
       }
     ]
   },

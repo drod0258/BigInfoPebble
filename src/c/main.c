@@ -52,7 +52,6 @@ typedef struct ClaySettings {
   GColor BatteryLowColorNight;
   bool NightTheme;
   bool ShowWeather;
-  int WeatherInterval;
   bool ShowDate;
   bool ShowDate2;
   bool AltDate;
@@ -68,11 +67,8 @@ typedef struct ClaySettings {
   bool BluetoothSound;
   bool BluetoothIcon;
   int Volume;
-  int Latitude;
-  int Longitude;
   // storage
   bool IsDay;
-  bool ManualCoordinates;
   int SunriseTime;
   int SunsetTime;
   int MoonPhase;
@@ -85,7 +81,6 @@ typedef struct ClaySettings {
   bool requestWeather;
   bool requestBattery;
   bool unsibscribeBattery;
-  bool updateCoordinates;
   bool requestJS;
 } ClaySettings;
 
@@ -173,7 +168,6 @@ static void prv_default_settings() {
   settings.ShowDate2 = false;
   settings.AltDate = false;
   settings.ShowWeather = false;
-  settings.WeatherInterval = 3;
   settings.ShowSteps = false;
   settings.ShowHR = false;
   settings.ShowSun = false;
@@ -188,7 +182,6 @@ static void prv_default_settings() {
   settings.Volume = 50;
   // storage
   settings.IsDay=false;
-  settings.ManualCoordinates=false;
   settings.SunriseTime=1;
   settings.SunsetTime=2359;
   settings.MoonPhase=29;
@@ -201,7 +194,6 @@ static void prv_default_settings() {
   settings.requestWeather=false;
   settings.requestBattery=false;
   settings.unsibscribeBattery=false;
-  settings.updateCoordinates=false;
   settings.requestJS=false;
 }
 
@@ -468,43 +460,6 @@ static void update_moon() {
   text_layer_set_text(s_moon_layer, moon_phase[settings.MoonPhase]);
 }
 
-int parse_coordinates(char *coor_str) {
-  char *dot = strchr(coor_str, '.');
-  int whole_part = 0;
-  int frac_part = 0;
-  
-  if (dot) {
-    // Null-terminate at the dot to isolate the whole number
-    *dot = '\0';
-    whole_part = atoi(coor_str);
-    
-    // Move to the character after the dot
-    char *fractional_string = dot + 1;
-    int len = strlen(fractional_string);
-    frac_part = atoi(fractional_string);
-    
-    // Scale the fractional part to 6 decimal places
-    // e.g., if ".5" it becomes 500000. If ".5074" it becomes 507400
-    for (int i = len; i < 6; i++) {
-      frac_part *= 10;
-    }
-    // If the fractional part was longer than 6, truncate it
-    for (int i = len; i > 6; i--) {
-      frac_part /= 10;
-    }
-  } else {
-    // No decimal point found
-    whole_part = atoi(coor_str);
-  }
-
-  // Combine them (handling negative coordinates like -74.00)
-  if (whole_part < 0 || coor_str[0] == '-') {
-    return (whole_part * 1000000) - frac_part;
-  } else {
-    return (whole_part * 1000000) + frac_part;
-  }
-}
-
 static void request_js() {
   DictionaryIterator *iter;
   app_message_outbox_begin(&iter);
@@ -523,17 +478,6 @@ static void request_js() {
   if (settings.unsibscribeBattery) {
     dict_write_uint8(iter, MESSAGE_KEY_UNSUBSCRIBE_BATTERY, 1);
     settings.unsibscribeBattery = false;
-  }
-  if (settings.updateCoordinates) {
-    // Send scaled int if coordinates are set, otherwise send empty string
-    if (settings.ManualCoordinates) {
-      dict_write_int32(iter, MESSAGE_KEY_Latitude, settings.Latitude);
-      dict_write_int32(iter, MESSAGE_KEY_Longitude, settings.Longitude);
-    } else {
-      dict_write_cstring(iter, MESSAGE_KEY_Latitude, "");
-      dict_write_cstring(iter, MESSAGE_KEY_Longitude, "");
-    }
-    settings.updateCoordinates = false;
   }
   settings.requestJS=false;
   app_message_outbox_send();
@@ -564,7 +508,7 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
     // generate message request only if showing info and time matches interval
     if (settings.ShowWeather || settings.ShowSun || settings.ShowMoon || settings.NightTheme) {
       // Get weather update every 1-6 hours
-      if (settings.ShowWeather && tick_time->tm_hour % settings.WeatherInterval == 0) {
+      if (settings.ShowWeather && tick_time->tm_hour % 1 == 0) {
         settings.requestWeather = true;
       }
       // Get sun & moon info every 24 hours
@@ -660,8 +604,6 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   bool prev_ShowWatchBattery = settings.ShowWatchBattery;
   bool prev_ShowPhoneBattery = settings.ShowPhoneBattery;
   bool prev_AltDate = settings.AltDate;
-  int prev_Lat = settings.Latitude;
-  int prev_Lon = settings.Longitude;
 
   Tuple *js_ready_t = dict_find(iterator, MESSAGE_KEY_JSReady);
   if(js_ready_t) {
@@ -805,10 +747,6 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   if (show_weather_t) {
     settings.ShowWeather = show_weather_t->value->int32 == 1;
   }
-  Tuple *weahter_interval_t = dict_find(iterator, MESSAGE_KEY_WeatherInterval);
-  if (weahter_interval_t) {
-    settings.WeatherInterval = (int)weahter_interval_t->value->int32;
-  }
   Tuple *show_steps_t = dict_find(iterator, MESSAGE_KEY_ShowSteps);
   if (show_steps_t) {
     settings.ShowSteps = show_steps_t->value->int32 == 1;
@@ -873,21 +811,6 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     settings.Volume = (int)volume_t->value->int32;
   }
 
-  // check for manual coordinates
-  Tuple *man_lat_t = dict_find(iterator, MESSAGE_KEY_Latitude);
-  if (man_lat_t) {
-    settings.Latitude = parse_coordinates(man_lat_t->value->cstring);
-  }
-  Tuple *man_lon_t = dict_find(iterator, MESSAGE_KEY_Longitude);
-  if (man_lon_t) {
-    settings.Longitude = parse_coordinates(man_lon_t->value->cstring);
-  }
-  if (settings.Latitude && settings.Longitude && (strcmp(man_lat_t->value->cstring,"") != 0) && (strcmp(man_lon_t->value->cstring,"") != 0)) {
-    settings.ManualCoordinates = true;
-  } else {
-    settings.ManualCoordinates = false;
-  }
-
   // Check for weather data
   Tuple *temp_tuple = dict_find(iterator, MESSAGE_KEY_TEMPERATURE);
   if (temp_tuple) {
@@ -943,7 +866,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     sun_color_night_t || moon_color_night_t || battery_outline_color_night_t || battery_charging_color_night_t || 
     battery_full_color_night_t || battery_mid_color_night_t || battery_low_color_night_t || 
     show_date_t || show_date2_t || alt_date_t || show_steps_t || show_hr_t || 
-    show_weather_t || weahter_interval_t || show_sun_t || show_moon_t || man_lat_t || man_lon_t || 
+    show_weather_t || show_sun_t || show_moon_t || 
     show_charging_t || battery_mid_percent_t || battery_low_percent_t || 
     show_phone_battery_t || show_watch_battery_t || periodic_vibrate_t || periodic_sound_t || 
     bluetooth_vibrate_t || bluetooth_sound_t || bluetooth_icon_t || volume_t || js_ready_t) {
@@ -1011,18 +934,16 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     prv_update_display();
 
     // Request data when a setting was changed
-    settings.updateCoordinates = (prev_Lat != settings.Latitude) ||
-                                 (prev_Lon != settings.Longitude);
     settings.requestSun = settings.requestSun || 
                           (!prev_ShowSun && settings.ShowSun) ||
                           (!prev_ShowMoon && settings.ShowMoon) ||
                           (!prev_NightTheme && settings.NightTheme) ||
-                          (settings.updateCoordinates && (settings.ShowSun || settings.ShowMoon || settings.NightTheme));
+                          (settings.ShowSun || settings.ShowMoon || settings.NightTheme);
     settings.requestWeather = settings.requestWeather || 
-                              ((!prev_ShowWeather || settings.updateCoordinates) && settings.ShowWeather);
+                              (!prev_ShowWeather && settings.ShowWeather);
     settings.requestBattery = (!prev_ShowPhoneBattery && settings.ShowPhoneBattery);
     settings.unsibscribeBattery = (prev_ShowPhoneBattery && !settings.ShowPhoneBattery);
-    if (settings.requestSun || settings.requestWeather || settings.requestBattery || settings.unsibscribeBattery || settings.updateCoordinates) {
+    if (settings.requestSun || settings.requestWeather || settings.requestBattery || settings.unsibscribeBattery) {
       request_js();
     }
   } else if (temp_tuple || condition_tuple || sunrise_tuple || sunset_tuple || moon_tuple || battery_tuple || charging_tuple) {

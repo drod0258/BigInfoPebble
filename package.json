@@ -70,7 +70,6 @@
       "BatteryMidColorNight",
       "BatteryLowColorNight",
       "ShowWeather",
-      "WeatherInterval",
       "TEMPERATURE",
       "TEMPERATURE_UNIT",
       "CONDITION",
@@ -101,8 +100,6 @@
       "BatteryMidPercent",
       "BatteryLowPercent",
       "ShowCharging",
-      "Latitude",
-      "Longitude",
       "JSReady"
     ],
     "resources": {
@@ -158,12 +155,12 @@
     "usesPermissions": [
       {
         "name": "Location",
-        "reason": "To show the weather where you are",
+        "reason": "To show your local weather, sunrise and sunset times",
         "required": false
       },
       {
         "name": "Health",
-        "reason": "To show health data on the watchface",
+        "reason": "To show steps and HR on the watchface",
         "required": false
       }
     ]

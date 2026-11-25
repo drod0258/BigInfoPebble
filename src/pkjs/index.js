@@ -407,27 +407,6 @@ Pebble.addEventListener('appmessage',
     console.log('AppMessage received!');
     var dict = e.payload;
 
-    // Check for manual coordinates
-    if (dict.hasOwnProperty('Latitude') && dict.hasOwnProperty('Longitude')) {
-      console.log('manual coordinates recieved');
-      var lat = dict['Latitude'];
-      var lon = dict['Longitude'];
-      // If BOTH fields have content and are not just empty strings save to localStorage
-      if (lat !== "" && lon !== "" && lat !== undefined && lon !== undefined) {
-        var manualCoordinates = 1;
-        localStorage.setItem('Latitude', lat);
-        localStorage.setItem('Longitude', lon);
-        console.log('latitude: ' + (lat / 1000000));
-        console.log('longitude: ' + (lon / 1000000));
-      } else {
-        var manualCoordinates = 0;
-        localStorage.removeItem('Latitude');
-        localStorage.removeItem('Longitude');
-        console.log('manual coordinates disabled');
-      }
-      localStorage.setItem('manualCoordinates', manualCoordinates);
-    }
-
     // Check if this is a sun info refresh request
     if (dict['REQUEST_SUN']) {
       sendSun();
