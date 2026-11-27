@@ -142,6 +142,16 @@ function subscribeToWeather() {
       var here = update.instances[0];
       if (!here) {
         console.log('Weather unavailable');
+        if (!latestWeather || 
+            latestWeather.TEMPERATURE !== 200 ||
+            latestWeather.CONDITION !== 8) {
+          latestWeather = {
+            'TEMPERATURE': 200,
+            'TEMPERATURE_UNIT': 0,
+            'CONDITION': 8
+          };
+          sendWeather();
+        }
         return;
       }
 
@@ -151,6 +161,16 @@ function subscribeToWeather() {
       if (!temperature || !temperature.numericValue ||
           !condition || !condition.longText) {
         console.log('Weather unavailable');
+        if (!latestWeather || 
+            latestWeather.TEMPERATURE !== 200 ||
+            latestWeather.CONDITION !== 8) {
+          latestWeather = {
+            'TEMPERATURE': 200,
+            'TEMPERATURE_UNIT': 0,
+            'CONDITION': 8
+          };
+          sendWeather();
+        }
         return;
       }
       // useful debug logs showing source data format
@@ -174,7 +194,7 @@ function subscribeToWeather() {
         };
         console.log(latestWeather);
         sendWeather();
-    }
+      }
     },
     onError: function(err) {
       console.log('Weather unavailable: ' + err.code + ' ' + err.message);

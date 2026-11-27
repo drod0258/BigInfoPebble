@@ -166,7 +166,7 @@ static void prv_default_settings() {
   settings.SunriseTime=0;
   settings.SunsetTime=2400;
   settings.MoonPhase=29;
-  settings.WeatherTemp=-99;
+  settings.WeatherTemp=200;
   settings.WeatherUnit = false;
   settings.WeatherIcon=8;
   settings.PhoneBattery=0;
@@ -359,8 +359,12 @@ static void update_date() {
 }
 
 static void update_weather() {
-  static char temperature_buffer[8];
-  snprintf(temperature_buffer, sizeof(temperature_buffer), "%d%s", settings.WeatherTemp, settings.WeatherUnit ? "°F" : "°C");
+  static char temperature_buffer[16];
+  if (settings.WeatherTemp >= 200) {
+    snprintf(temperature_buffer, sizeof(temperature_buffer), "N/A");
+  } else {
+    snprintf(temperature_buffer, sizeof(temperature_buffer), "%d%s", settings.WeatherTemp, settings.WeatherUnit ? "°F" : "°C");
+  }
   text_layer_set_text(s_weather_layer, temperature_buffer);
   text_layer_set_text(s_weather_icon_layer, weather_condition[settings.WeatherIcon]);
 }
@@ -725,6 +729,9 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   Tuple *condition_tuple = dict_find(iterator, MESSAGE_KEY_CONDITION);
   if (condition_tuple) {
     settings.WeatherIcon = (int)condition_tuple->value->int32;
+    if (!settings.IsDay) {
+      settings.WeatherIcon = settings.WeatherIcon + 9;
+    }
   }
   if (temp_tuple || temp_unit_tuple || condition_tuple) {
     update_weather();
