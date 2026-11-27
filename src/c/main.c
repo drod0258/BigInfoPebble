@@ -380,7 +380,9 @@ static void update_health() {
     int hundreds = (step_count % 1000)/100;
     if(thousands > 0) {
       snprintf(s_steps_buffer, sizeof(s_steps_buffer), "%d.%d%s", thousands, hundreds, "k");
-    } else {
+    } else if (step_count == 0) {
+      snprintf(s_steps_buffer, sizeof(s_steps_buffer), "N/A");
+    }else {
       snprintf(s_steps_buffer, sizeof(s_steps_buffer), "%d", step_count);
     }
     if (settings.ShowHR && (PBL_DISPLAY_HEIGHT >= 228)) {
@@ -399,7 +401,11 @@ static void update_health() {
   // only show HR on small screens if steps are not shown
   if (settings.ShowHR && (!settings.ShowSteps || PBL_DISPLAY_HEIGHT >= 228)) {
     int hr = (int)health_service_peek_current_value(HealthMetricHeartRateBPM);
-    snprintf(s_hr_buffer, sizeof(s_hr_buffer), "%d", hr);
+    if (hr == 0) {
+      snprintf(s_hr_buffer, sizeof(s_hr_buffer), "N/A");
+    } else {
+      snprintf(s_hr_buffer, sizeof(s_hr_buffer), "%d", hr);
+    }
   } else {
     snprintf(s_hr_buffer, sizeof(s_hr_buffer), "%s", "");
   }
