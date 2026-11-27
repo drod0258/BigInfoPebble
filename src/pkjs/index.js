@@ -38,7 +38,7 @@ function illuminationFraction(illumination) {
   } else if (illumination.unit === '%' || value > 1) {
     value /= 100;
   }
-  if (value < 0 || value > 1) {
+  if (!isFinite(value) || value < 0 || value > 1) {
     return null;
   }
   return value;
@@ -75,7 +75,13 @@ function phaseIndexFromIllumination(illumination, phaseText) {
   if (direction === 'waning') {
     phase = 1 - phase;
   }
-  return Math.max(0, Math.min(28, Math.round(phase * 28)));
+  var index = Math.round(phase * 28);
+
+  // Keep non-endpoint phases out of the new/full moon icons after rounding.
+  if (direction === 'waning') {
+    return Math.max(15, Math.min(27, index));
+  }
+  return Math.max(1, Math.min(13, index));
 }
 
 // send data functions
