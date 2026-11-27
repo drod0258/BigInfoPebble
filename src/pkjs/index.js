@@ -387,6 +387,10 @@ function subscribeToMoon() {
   }
   if (!selectedSource) {
     console.log('No compatible moon plugin found!');
+    if (!latestMoon || latestMoon.MOONPHASE !== 29) {
+      latestMoon = { 'MOONPHASE': 29 };
+    }
+    sendMoon();
     return;
   }
   console.log('Using ' + selectedSource.plugin.name + "'s " + selectedSource.category + '/' + selectedSource.item + ' for moon data');
@@ -401,6 +405,10 @@ function subscribeToMoon() {
       var here = update.instances[0];
       if (!here || !here.properties) {
         console.log('Moon phase unavailable');
+        if (!latestMoon || latestMoon.MOONPHASE !== 29) {
+          latestMoon = { 'MOONPHASE': 29 };
+        }
+        sendMoon();
         return;
       }
 
@@ -410,6 +418,10 @@ function subscribeToMoon() {
       if (!phase || !phase.longText ||
           !illumination || !illumination.numericValue) {
         console.log('Moon phase unavailable');
+        if (!latestMoon || latestMoon.MOONPHASE !== 29) {
+          latestMoon = { 'MOONPHASE': 29 };
+        }
+        sendMoon();
         return;
       }
       // useful debug logs showing source data format
@@ -420,6 +432,10 @@ function subscribeToMoon() {
       var moonPhase = phaseIndexFromIllumination(illumination.numericValue, phase.longText);
       if (moonPhase === null) {
         console.log('Moon phase unavailable');
+        if (!latestMoon || latestMoon.MOONPHASE !== 29) {
+          latestMoon = { 'MOONPHASE': 29 };
+        }
+        sendMoon();
         return;
       }
       if (!latestMoon || latestMoon.MOONPHASE !== moonPhase) {
