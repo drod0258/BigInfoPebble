@@ -163,8 +163,8 @@ static void prv_default_settings() {
   settings.BluetoothIcon = true;
   // storage
   settings.IsDay=false;
-  settings.SunriseTime=1;
-  settings.SunsetTime=2359;
+  settings.SunriseTime=0;
+  settings.SunsetTime=2400;
   settings.MoonPhase=29;
   settings.WeatherTemp=-99;
   settings.WeatherUnit = false;
@@ -406,24 +406,29 @@ static void update_health() {
 static void update_sun() {
   static char sunrise_buffer[6];
   static char sunset_buffer[6];
-  int sunriseHour = (settings.SunriseTime / 100);
-  int sunriseMinute = (settings.SunriseTime % 100);
-  int sunsetHour = (settings.SunsetTime / 100);
-  int sunsetMinute = (settings.SunsetTime % 100);
-  if (!clock_is_24h_style()) {
-    if (sunriseHour > 12) {
-      sunriseHour -= 12;
-    } else if (sunriseHour == 0) {
-      sunriseHour = 12;
+  if (settings.SunsetTime >= 2400) {
+    snprintf(sunrise_buffer, sizeof(sunrise_buffer), "N/A");
+    snprintf(sunset_buffer, sizeof(sunset_buffer), "N/A");
+  } else {
+    int sunriseHour = (settings.SunriseTime / 100);
+    int sunriseMinute = (settings.SunriseTime % 100);
+    int sunsetHour = (settings.SunsetTime / 100);
+    int sunsetMinute = (settings.SunsetTime % 100);
+    if (!clock_is_24h_style()) {
+      if (sunriseHour > 12) {
+        sunriseHour -= 12;
+      } else if (sunriseHour == 0) {
+        sunriseHour = 12;
+      }
+      if (sunsetHour > 12) {
+        sunsetHour -= 12;
+      } else if (sunsetHour == 0) {
+        sunsetHour = 12;
+      }
     }
-    if (sunsetHour > 12) {
-      sunsetHour -= 12;
-    } else if (sunsetHour == 0) {
-      sunsetHour = 12;
-    }
+    snprintf(sunrise_buffer, sizeof(sunrise_buffer), clock_is_24h_style() ? "%02d:%02d" : "%d:%02d", sunriseHour, sunriseMinute);
+    snprintf(sunset_buffer, sizeof(sunset_buffer), clock_is_24h_style() ? "%02d:%02d" : "%d:%02d", sunsetHour, sunsetMinute);
   }
-  snprintf(sunrise_buffer, sizeof(sunrise_buffer), clock_is_24h_style() ? "%02d:%02d" : "%d:%02d", sunriseHour, sunriseMinute);
-  snprintf(sunset_buffer, sizeof(sunset_buffer), clock_is_24h_style() ? "%02d:%02d" : "%d:%02d", sunsetHour, sunsetMinute);
   text_layer_set_text(s_sunrise_layer, sunrise_buffer);
   text_layer_set_text(s_sunset_layer, sunset_buffer);
 }

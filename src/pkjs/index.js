@@ -249,6 +249,15 @@ function subscribeToSun() {
   }
   if (!selectedSource) {
     console.log('No compatible sun plugin found!');
+    if (!latestSun || 
+        latestSun.SUNRISE !== 0 ||
+        latestSun.SUNSET !== 2400) {
+      latestSun = {
+        'SUNRISE': 0,
+        'SUNSET': 2400
+      };
+    }
+    sendSun();
     return;
   }
   console.log('Using ' + selectedSource.plugin.name + "'s " + selectedSource.category + '/' + selectedSource.item + ' for sun data');
@@ -263,6 +272,15 @@ function subscribeToSun() {
       var here = update.instances[0];
       if (!here) {
         console.log('Sun data unavailable');
+        if (!latestSun || 
+            latestSun.SUNRISE !== 0 ||
+            latestSun.SUNSET !== 2400) {
+          latestSun = {
+            'SUNRISE': 0,
+            'SUNSET': 2400
+          };
+        }
+        sendSun();
         return;
       }
 
@@ -272,6 +290,15 @@ function subscribeToSun() {
       if (!sunrise || !sunrise.timestamp ||
           !sunset || !sunset.timestamp) {
         console.log('Sun data unavailable');
+        if (!latestSun || 
+            latestSun.SUNRISE !== 0 ||
+            latestSun.SUNSET !== 2400) {
+          latestSun = {
+            'SUNRISE': 0,
+            'SUNSET': 2400
+          };
+        }
+        sendSun();
         return;
       }
       // useful debug logs showing source data format
